@@ -32,7 +32,8 @@ extend lines through unresolved hits; when a ship sinks, infer which hits belong
 reported length so a touching ship is not abandoned (see `docs/BUGLOG.md` #1, #8). A self-play test
 checks the average shots-to-win over random fleets stays within 46–65.
 
-See `docs/BUGLOG.md` for the running log of bugs and first-attempt misses.
+See `docs/BUGS.md` for the bug write-up and `docs/BUGLOG.md` for the running log of bugs and
+first-attempt misses.
 
 ## Develop
 
@@ -52,6 +53,6 @@ npm run selfplay -- 1000   # AI vs AI fuzz: invariants + shot-count stats
 - `src/ai/` — the opponent. May import only `AIView`-related types; never the board.
 - `src/ui/` — React components and the `useGame` reducer hook.
 - `tests/` — Vitest.
-- `docs/BUGLOG.md` — running log of bugs and misses.
+- `docs/BUGS.md` — the bug write-up; `docs/BUGLOG.md` — running log of bugs and misses.
 
 MIT.
