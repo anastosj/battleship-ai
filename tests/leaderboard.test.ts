@@ -152,6 +152,39 @@ describe('leaderboard store', () => {
     expect(storage.data.has(LEADERBOARD_KEY)).toBe(false);
   });
 
+  it('add reports false when another tab filled the board with better scores first', () => {
+    const storage = memoryStorage();
+    const store = createLeaderboardStore(storage, undefined);
+    expect(store.add(entry('mine', 30))).toBe(true);
+    saveEntries(
+      storage,
+      Array.from({ length: MAX_ENTRIES }, (_, i) => entry(`other${i}`, 20)),
+    );
+    expect(store.add(entry('late', 30))).toBe(false);
+    expect(store.get().some((e) => e.id === 'late')).toBe(false);
+  });
+
+  it('keeps unsaved in-memory writes when storage rejects them, then syncs once it works', () => {
+    const storage = memoryStorage();
+    let quotaFull = true;
+    const flaky: MatchStorage = {
+      getItem: storage.getItem,
+      removeItem: storage.removeItem,
+      setItem: (k, v) => {
+        if (quotaFull) throw new Error('QuotaExceededError');
+        storage.setItem(k, v);
+      },
+    };
+    const store = createLeaderboardStore(flaky, undefined);
+    store.add(entry('ada', 30));
+    store.add(entry('grace', 25));
+    expect(store.get().map((e) => e.id)).toEqual(['grace', 'ada']);
+    expect(storage.data.has(LEADERBOARD_KEY)).toBe(false);
+    quotaFull = false;
+    store.add(entry('linus', 20));
+    expect(loadEntries(storage).map((e) => e.id)).toEqual(['linus', 'grace', 'ada']);
+  });
+
   it('a throwing storage degrades to an in-memory board', () => {
     const broken: MatchStorage = {
       getItem: () => {

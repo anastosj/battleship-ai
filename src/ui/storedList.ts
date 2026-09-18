@@ -31,8 +31,9 @@ type Options<T> = {
 
 /**
  * Tiny external store over one storage key holding a list. Every write re-reads storage
- * first, and other tabs' writes arrive via the `storage` event, so two tabs never clobber
- * each other. Storage that throws degrades to an in-memory list.
+ * first and other tabs' writes arrive via the `storage` event, so tabs only lose an entry if
+ * they write within the same read-modify-write window (Web Storage has no atomic update).
+ * Storage that throws degrades to an in-memory list until a write succeeds again.
  */
 export const createStoredList = <T>({
   key,
@@ -48,6 +49,7 @@ export const createStoredList = <T>({
     }
   };
   let items: readonly T[] = read() ?? [];
+  let dirty = false;
   const listeners = new Set<() => void>();
   const notify = () => listeners.forEach((l) => l());
 
@@ -59,8 +61,9 @@ export const createStoredList = <T>({
         if (next.length === 0) storage.removeItem(key);
         else storage.setItem(key, JSON.stringify(next));
       }
+      dirty = false;
     } catch {
-      /* storage full or blocked: keep the in-memory list */
+      dirty = true;
     }
     notify();
   };
@@ -69,6 +72,7 @@ export const createStoredList = <T>({
     if (e.key !== key && e.key !== null) return;
     if (e.storageArea && e.storageArea !== storage) return;
     items = parse(e.newValue);
+    dirty = false;
     notify();
   };
 
@@ -82,8 +86,14 @@ export const createStoredList = <T>({
         if (listeners.size === 0) events?.removeEventListener('storage', onStorage);
       };
     },
-    /** Applies `fn` to the freshest list available (storage first, memory as fallback). */
-    update: (fn: (current: readonly T[]) => readonly T[]) => set(fn(read() ?? items)),
+    /**
+     * Applies `fn` to the freshest list: storage, unless the in-memory list holds writes
+     * that storage rejected, in which case those must not be lost to a stale re-read.
+     */
+    update: (fn: (current: readonly T[]) => readonly T[]) => {
+      set(fn(dirty ? items : (read() ?? items)));
+      return items;
+    },
     clear: () => set([]),
   };
 };

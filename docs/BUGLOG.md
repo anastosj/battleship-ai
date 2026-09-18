@@ -421,3 +421,21 @@ The modal's focus trap now discovers focusables on each Tab press instead of pin
 button, since the name field appears and disappears. The localStorage mechanics from PR 6 moved
 into a shared `createStoredList` so both lists get the same re-read-before-write and
 cross-tab `storage` handling; the history tests were the regression check for that move.
+
+### 28. Shared store lost unsaved writes after a quota failure; `submit` could report a save that was rejected (2026-09-18, PR 7, layer: persistence — caught by Devin Review)
+
+Two valid findings on the first push of PR 7.
+
+1. When `setItem` threw (quota, private mode), `set` kept the new list in memory — but the next
+   `update` re-read storage first, so a stale persisted list replaced the unsaved one. Add Ada
+   (write fails), add Grace → only Grace. Fix: a `dirty` flag set on a failed write; while dirty,
+   updates apply to the in-memory list, and a successful write or a `storage` event clears it.
+   Test: a storage whose `setItem` fails then recovers keeps both names and syncs all three.
+2. `submit` computed `qualifying` from the hook's snapshot, but `add` re-reads storage before
+   ranking. If another tab pushed the cutoff below the win in between, the entry was dropped and
+   the modal still said "Saved". Fix: `add` returns whether the id is on the freshly ranked list;
+   `submit` only marks the game saved when it is. Test: fill storage from "another tab", then add.
+
+Also softened the store's doc comment — it claimed tabs "never clobber each other", while #26
+already admits the same-window race. Lesson: the failure branch I wrote deliberately (keep the
+in-memory list) was only half a design; the other half is what the _next_ operation does.

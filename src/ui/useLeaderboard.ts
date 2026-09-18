@@ -33,7 +33,9 @@ export const createLeaderboardStore = (
   return {
     get: list.get,
     subscribe: list.subscribe,
-    add: (entry: LeaderboardEntry) => list.update((current) => addEntry(current, entry)),
+    /** Returns false if the entry no longer makes the board once storage is re-read. */
+    add: (entry: LeaderboardEntry): boolean =>
+      list.update((current) => addEntry(current, entry)).some((e) => e.id === entry.id),
     clear: list.clear,
   };
 };
@@ -57,9 +59,9 @@ export const useLeaderboard = (game: GameState) => {
   const submit = (name: string): boolean => {
     if (!qualifying || normalizeName(name) === '') return false;
     const id = newId();
-    store.add(entryFor(game, id, name, new Date().toISOString()));
-    setSaved({ game, id });
-    return true;
+    const placed = store.add(entryFor(game, id, name, new Date().toISOString()));
+    if (placed) setSaved({ game, id });
+    return placed;
   };
 
   const latest = entries.reduce<LeaderboardEntry | undefined>(
