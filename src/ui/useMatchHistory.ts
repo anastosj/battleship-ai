@@ -65,6 +65,7 @@ export const createMatchStore = (
 
   const onStorage = (e: StorageEvent) => {
     if (e.key !== STORAGE_KEY && e.key !== null) return;
+    if (e.storageArea && e.storageArea !== storage) return;
     matches = parseMatches(e.newValue);
     notify();
   };
