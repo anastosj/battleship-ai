@@ -286,3 +286,23 @@ both edges on phones.
 Fix: `box-sizing: border-box` on the modal. First automated review finding on this repo; a jsdom
 test cannot see it and my own "verified at 375 px" claim in #17 was written before the browser
 check — a miss on top of the miss.
+
+### 19. First "Randomize fleet" gave the player the enemy's exact layout (2026-09-18, shipped in PR 3, found in the PR 4 live test, layer: ui/state — the worst bug in the log)
+
+Symptom: the tester noticed both fleets had identical coordinates after pressing Randomize once
+and then winning. That is not a coincidence: it happened on **every** game where the first press
+was Randomize (the most common path), so the player could read the enemy board off their own.
+
+Root cause: `startGame(seed)` draws the AI fleet from `makeRng(seed)`; `useGame` created its own
+stream for Randomize/coin with the _same_ `makeRng(seed)`. Two fresh copies of one deterministic
+generator produce the same first `randomFleet`. The second press differed (the stream had
+advanced), so the test "every press produces a different one" passed, and the live PR 3 tester
+compared successive presses, never player-vs-enemy.
+
+Fix: the UI stream is `uiRng(seed) = makeRng((seed ^ 0x9e3779b9) >>> 0)`, a different seed from
+the engine's. Test: `tests/app.test.tsx` › "the first Randomize never hands the player a copy of
+the enemy fleet" (fails on the old code for all five seeds tried).
+
+What would have caught it earlier: an invariant test "human fleet ≠ AI fleet after Randomize", or
+simply an eye on the reveal at game over. It is exactly the class of bug §8.1 warned about —
+invisible during play, only obvious once you compare the two boards.
