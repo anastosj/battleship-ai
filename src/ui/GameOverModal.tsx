@@ -68,11 +68,13 @@ export const GameOverModal = ({ game, playAgain, leaderboard }: Props) => {
         aria-modal="true"
         aria-labelledby="gameover-title"
       >
-        <h2 id="gameover-title">{won ? 'You win!' : 'You lose'}</h2>
+        <h2 id="gameover-title" className={won ? 'won' : 'lost'}>
+          {won ? 'Victory, Captain — You win!' : 'Fleet lost — You lose'}
+        </h2>
         <p>
           {won
             ? `All enemy ships sunk in ${shotCount(game.ai)} shots.`
-            : `The enemy sank your fleet in ${shotCount(game.human)} shots.`}
+            : `The enemy sank your fleet in ${shotCount(game.human)} shots. The frontier waits for no one.`}
         </p>
         <table className="stats">
           <thead>
@@ -107,9 +109,11 @@ export const GameOverModal = ({ game, playAgain, leaderboard }: Props) => {
 
         {leaderboard.qualifying && (
           <form className="leaderboard-prompt" onSubmit={onSubmit}>
-            <p className="leaderboard-callout">{yourShots} shots makes the leaderboard!</p>
+            <p className="leaderboard-callout">
+              {yourShots} shots earns a place in the Hall of Captains!
+            </p>
             <label>
-              Your name
+              Captain's name
               <input
                 type="text"
                 value={name}
@@ -119,15 +123,15 @@ export const GameOverModal = ({ game, playAgain, leaderboard }: Props) => {
               />
             </label>
             <button type="submit" disabled={normalizeName(name) === ''}>
-              Save to leaderboard
+              Enter the Hall
             </button>
           </form>
         )}
         {leaderboard.saved && (
           <p className="leaderboard-callout" role="status">
             {leaderboard.rank === undefined
-              ? 'Saved to the leaderboard.'
-              : `Saved — you're #${leaderboard.rank} on the leaderboard.`}
+              ? 'Saved to the Hall of Captains.'
+              : `Saved — you're #${leaderboard.rank} in the Hall of Captains.`}
           </p>
         )}
 

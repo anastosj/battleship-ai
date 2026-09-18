@@ -1,4 +1,4 @@
-# Battleship vs. AI
+# Battleship: Captain Devin
 
 Play: **https://anastosj.github.io/battleship-ai/**
 
@@ -9,7 +9,7 @@ no backend, deployed to GitHub Pages on every push to `main`.
 
 Playable end to end: manual placement (click, **R** to rotate, pick ships back up) or
 "Randomize fleet" (repeatable), one-shot coin flip for first move (heads = you, tails = AI),
-Hunt/Target AI with a 250 ms reply, fleet panels, game-over modal with "Play again". Boards
+Hunt/Target AI with a 500 ms reply, fleet panels, game-over modal with "Play again". Boards
 stack on narrow screens, every cell is a labelled `<button>` with a state glyph (never colour
 alone), and a React error boundary turns a crash into a message with a reload button.
 
@@ -20,7 +20,7 @@ alone), and a React error boundary turns a crash into a message with a reload bu
    up again, or press **Randomize fleet** as often as you like.
 2. **Flip the coin** — once. Heads: you fire first. Tails: the AI opens.
 3. **Fire** by clicking a cell in Enemy waters. Miss `•`, hit `✕`, sunk `☒`. The AI answers
-   250 ms later. First to sink all five ships wins; the enemy's surviving ships are revealed at
+   500 ms later. First to sink all five ships wins; the enemy's surviving ships are revealed at
    the end.
 
 ## The AI

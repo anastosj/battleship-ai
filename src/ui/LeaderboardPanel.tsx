@@ -13,8 +13,8 @@ export const LeaderboardPanel = ({ entries, clear }: Props) => {
   return (
     <section className="history leaderboard" aria-labelledby="leaderboard-title">
       <div className="history-head">
-        <h2 id="leaderboard-title">Leaderboard</h2>
-        <span className="history-summary">Top {MAX_ENTRIES} wins by fewest shots</span>
+        <h2 id="leaderboard-title">Hall of Captains</h2>
+        <span className="history-summary">Top {MAX_ENTRIES} victories by fewest shots</span>
         <button type="button" onClick={clear}>
           Clear leaderboard
         </button>

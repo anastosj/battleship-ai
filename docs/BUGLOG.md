@@ -439,3 +439,20 @@ Two valid findings on the first push of PR 7.
 Also softened the store's doc comment — it claimed tabs "never clobber each other", while #26
 already admits the same-window race. Lesson: the failure branch I wrote deliberately (keep the
 in-memory list) was only half a design; the other half is what the _next_ operation does.
+
+### 29. Spec change: AI reply delay 250 ms → 500 ms (2026-09-18, PR 8, layer: spec — user decision)
+
+Spec v0.2 §F3 and PR 3 fixed the delay at 250 ms. While refining the Captain Devin theme the
+user asked for 500 ms ("i think 500ms delay") so the enemy's reply reads as a deliberate move
+under the new console styling. `AI_DELAY_MS` is the single source of truth, so the change is
+one constant; the fake-timer tests advance by the constant rather than a literal, which is
+why none of them needed touching. Logged as a spec deviation rather than a bug.
+
+### 30. Theme bumped the root font size and the boards stopped fitting side by side (2026-09-18, PR 8, layer: UI/CSS — caught by looking at it)
+
+VT323 is thin, so the theme raises the root font-size from 16 px to 20 px. `--cell` was
+`min(2.2rem, …)`, so every cell grew from 35 px to 44 px, two boards no longer fit in the
+960 px main column, and the enemy board wrapped underneath — on the first build, before any
+test failed, because no test measures layout. Fix: pin the desktop cap in pixels
+(`min(35px, …)`). Lesson (again, see #24): anything sized in `rem` moves when the theme
+touches the root font size; a desktop-width screenshot is the only check that catches it.

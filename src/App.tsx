@@ -21,7 +21,7 @@ export const App = ({ seed }: { seed?: number } = {}) => {
   return (
     <main>
       <header>
-        <h1>Battleship vs. AI</h1>
+        <h1>Battleship: Captain Devin</h1>
         {game.phase !== 'placement' && (
           <div className="header-right">
             <span className="badge" aria-label={`Opponent: ${DIFFICULTY_NAMES[game.difficulty]}`}>
@@ -66,7 +66,7 @@ export const App = ({ seed }: { seed?: number } = {}) => {
             {game.phase === 'playing' && (
               <span className="turn">
                 {' '}
-                {humanTurn ? 'Your turn — fire!' : 'Enemy is thinking…'}
+                {humanTurn ? 'Your turn, Captain — fire!' : 'Enemy is thinking…'}
               </span>
             )}
           </p>

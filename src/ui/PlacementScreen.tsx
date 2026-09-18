@@ -29,9 +29,14 @@ type Props = {
   setDifficulty: (difficulty: Difficulty) => void;
 };
 
+const DIFFICULTY_CALLSIGNS: Record<Difficulty, string> = {
+  easy: 'Cadet',
+  hard: 'No Slowing the Frontier',
+};
+
 const DIFFICULTY_HINTS: Record<Difficulty, string> = {
   easy: 'Fires at random, then pokes around a hit.',
-  hard: 'Parity hunt, line targeting, remembers touching ships.',
+  hard: 'Parity hunt, line targeting, never forgets a hit.',
 };
 
 export const PlacementScreen = ({
@@ -114,7 +119,8 @@ export const PlacementScreen = ({
                 onChange={() => setDifficulty(d)}
               />
               <span>
-                <strong>{DIFFICULTY_NAMES[d]}</strong> — {DIFFICULTY_HINTS[d]}
+                <strong>{DIFFICULTY_NAMES[d]}</strong> — “{DIFFICULTY_CALLSIGNS[d]}”
+                <span className="hint">{DIFFICULTY_HINTS[d]}</span>
               </span>
             </label>
           ))}
@@ -140,7 +146,7 @@ export const PlacementScreen = ({
         </div>
         <p className="hint">
           {selected === undefined
-            ? 'All ships placed. Click a ship on the board to move it, or continue.'
+            ? 'Fleet in position, Captain. Click a ship on the board to move it, or continue.'
             : `Placing ${SHIP_NAMES[selected]}: click or focus a cell and press Enter for its bow. Click a placed ship to pick it up.`}
         </p>
       </div>
