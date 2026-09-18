@@ -110,6 +110,9 @@ button.big {
   flex-wrap: wrap;
   align-items: flex-start;
 }
+.tray {
+  flex: 0 1 20rem;
+}
 .tray h2 {
   font-size: 1rem;
   margin: 0 0 0.5rem;
