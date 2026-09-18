@@ -492,6 +492,16 @@ button.big {
     padding: 0.5rem 0.75rem;
     background: var(--bg);
     border-bottom: 1px solid var(--line);
+    /* Fixed three-line box (two for the shot report, one for the turn) so the
+       boards never shift as the message length changes. */
+    box-sizing: content-box;
+    line-height: 1.3;
+    height: calc(3 * 1.3em);
+    overflow: hidden;
+  }
+  .status .turn {
+    display: block;
+    margin-left: 0;
   }
   .modal {
     box-sizing: border-box;

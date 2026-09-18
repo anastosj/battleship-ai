@@ -524,3 +524,14 @@ pointerdown, so a keyboard Enter on a cell that had once been tapped inherited t
 cleanup and wiped its focus preview. The marker is now read and cleared on every click and dropped on `pointercancel`
 (a touch that turned into a scroll never clicks); test extended. Both were consequences of the same instinct — fix the phone case in isolation without
 asking what the other input modes now do.
+
+### 36. Status line changed height between turns and the phone board jumped (2026-09-18, PR 12, layer: UI/CSS — user found it playing on a phone)
+
+"Enemy is thinking…" appended to a one-line report fitted on one line; appended to
+"You sank their Battleship! Enemy sank your Carrier!" it wrapped to three, so the sticky
+status grew and shrank every turn and pushed the enemy grid up and down under the thumb.
+The desktop `min-height: 1.5em` was written for a single wide line and never revisited when
+the status became sticky in PR 11. Phone status is now a fixed three-line box (two for the
+report, one for the turn cue on its own line); measured constant 99 px across eight turns.
+Lesson: anything `position: sticky` with variable text needs a fixed height — the jitter
+is invisible with a mouse and obvious with a thumb.
