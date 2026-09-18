@@ -7,9 +7,11 @@ no backend, deployed to GitHub Pages on every push to `main`.
 
 ## Status
 
-Walking skeleton (PR 1): fixed fleets, human fires first, AI fires at random. Placement,
-coin flip and the Hunt/Target AI follow in later PRs — see `docs/BUGLOG.md` for the running
-bug/miss log.
+Playable end to end: manual placement (click, **R** to rotate, pick ships back up) or
+"Randomize fleet" (repeatable), one-shot coin flip for first move (heads = you, tails = AI),
+Hunt/Target AI with a 250 ms reply, fleet panels, game-over modal with "Play again".
+Responsive/accessibility polish and an error boundary follow in PR 4 — see `docs/BUGLOG.md` for
+the running bug/miss log.
 
 ## Develop
 

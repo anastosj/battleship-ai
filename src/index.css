@@ -60,3 +60,163 @@ header {
   background: #d9463e;
   color: #fff;
 }
+.cell.sunk {
+  background: #8b1e1a;
+  color: #fff;
+}
+.cell.preview-ok {
+  outline: 3px solid #2e9e44;
+  outline-offset: -3px;
+}
+.cell.preview-bad {
+  outline: 3px solid #d9463e;
+  outline-offset: -3px;
+}
+.cell:focus-visible {
+  outline: 3px solid #1a56db;
+  outline-offset: 1px;
+  z-index: 1;
+}
+button.primary {
+  background: #1a56db;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+button.primary:disabled {
+  background: #9db3e6;
+  cursor: default;
+}
+button.big {
+  font-size: 1.25rem;
+  padding: 0.75rem 1.5rem;
+}
+.placement {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.tray h2 {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+}
+.ship-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  display: grid;
+  gap: 4px;
+}
+.ship-pick {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+  border: 2px solid #8fa3b8;
+  background: #fff;
+  cursor: pointer;
+}
+.ship-pick.selected {
+  border-color: #1a56db;
+  background: #e8effc;
+}
+.ship-pick.placed .pips {
+  color: #7f8c8d;
+}
+.ship-pick .pips {
+  color: #1a56db;
+  letter-spacing: 1px;
+}
+.ship-pick .ship-state {
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: #555;
+}
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.hint {
+  color: #555;
+  max-width: 24rem;
+}
+.coinflip {
+  text-align: center;
+  padding: 2rem 0;
+}
+.coin {
+  width: 6rem;
+  height: 6rem;
+  margin: 1rem auto;
+  border-radius: 50%;
+  background: #e0b52f;
+  border: 4px solid #b8901a;
+  display: grid;
+  place-items: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #5a4300;
+}
+.coin.spinning {
+  animation: spin 0.25s linear infinite;
+}
+@keyframes spin {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coin.spinning {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+.side {
+  display: grid;
+  gap: 1rem;
+}
+.fleet h3 {
+  font-size: 0.95rem;
+  margin: 0 0 0.25rem;
+}
+.fleet ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.fleet li.sunk {
+  color: #8b1e1a;
+  text-decoration: line-through;
+}
+.fleet .shots {
+  margin: 0.25rem 0 0;
+  color: #555;
+  font-size: 0.9rem;
+}
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: grid;
+  place-items: center;
+}
+.modal {
+  background: #fff;
+  padding: 1.5rem 2rem;
+  border-radius: 8px;
+  min-width: 18rem;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+.modal h2 {
+  margin-top: 0;
+}

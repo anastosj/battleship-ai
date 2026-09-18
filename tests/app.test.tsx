@@ -1,46 +1,215 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../src/App';
-import { AI_DELAY_MS } from '../src/ui/useGame';
+import { randomFleet } from '../src/engine/fleet';
+import { confirmFleet, flipCoin, setHumanFleet, startGame } from '../src/engine/game';
+import { makeRng } from '../src/engine/rng';
+import { AI_DELAY_MS, COIN_FLIP_MS } from '../src/ui/useGame';
 
-describe('App', () => {
+const grid = (name: string) => screen.getByRole('grid', { name });
+const shipCells = (g: HTMLElement) => g.querySelectorAll('.cell.ship').length;
+const shipKeys = (g: HTMLElement) =>
+  [...g.querySelectorAll('.cell.ship')].map((el) => el.getAttribute('aria-label')).join('|');
+const marks = (g: HTMLElement) => g.querySelectorAll('.cell.miss, .cell.hit, .cell.sunk').length;
+
+/** Seed whose "Randomize → Continue → Flip" path lands on the requested side (same RNG stream as the app). */
+const seedFor = (coin: 'heads' | 'tails'): number => {
+  for (let seed = 1; seed < 1000; seed++) {
+    const rng = makeRng(seed);
+    randomFleet(rng);
+    const game = flipCoin(
+      confirmFleet(setHumanFleet(startGame(seed), randomFleet(makeRng(0)))),
+      rng,
+    );
+    if (game.coin === coin) return seed;
+  }
+  throw new Error('unreachable');
+};
+
+/** Randomize → Continue → Flip, then advance past the reveal so play has begun. */
+const startWith = (coin: 'heads' | 'tails') => {
+  render(<App seed={seedFor(coin)} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Randomize fleet' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Continue to coin flip' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Flip coin' }));
+  act(() => {
+    vi.advanceTimersByTime(COIN_FLIP_MS + 10);
+  });
+  expect(screen.getByRole('status').textContent).toMatch(coin === 'heads' ? /^Heads/ : /^Tails/);
+};
+
+describe('placement', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it('lets the human fire, then the AI replies exactly once', () => {
+  it('starts in placement with an empty board and Continue disabled', () => {
     render(<App />);
-    const enemy = screen.getByRole('grid', { name: 'Enemy waters' });
-    const own = screen.getByRole('grid', { name: 'Your fleet' });
-    const before = own.querySelectorAll('.cell.miss, .cell.hit').length;
+    expect(shipCells(grid('Your fleet'))).toBe(0);
+    expect(screen.getByRole('button', { name: 'Continue to coin flip' })).toBeDisabled();
+    expect(screen.queryByRole('grid', { name: 'Enemy waters' })).toBeNull();
+  });
 
-    fireEvent.click(screen.getByRole('button', { name: 'J10, water' }));
-    expect(screen.getByRole('status').textContent).toContain('Enemy is thinking');
-    expect(enemy.querySelectorAll('.cell.miss')).toHaveLength(1);
+  it('places ships by clicking, auto-advances the selection, and rotates with R', () => {
+    render(<App />);
+    const own = grid('Your fleet');
+    fireEvent.click(within(own).getByRole('button', { name: 'A1, water' }));
+    expect(shipCells(own)).toBe(5); // carrier, horizontal A1–E1
+    expect(screen.getByRole('button', { name: /^Battleship/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
 
+    fireEvent.keyDown(window, { key: 'r' });
+    expect(screen.getByRole('button', { name: /^Rotate \(vertical\)/ })).toBeInTheDocument();
+    fireEvent.click(within(own).getByRole('button', { name: 'A2, water' }));
+    expect(shipCells(own)).toBe(9); // battleship vertical A2–A5
+    expect(within(own).getByRole('button', { name: 'A5, ship' })).toBeInTheDocument();
+  });
+
+  it('rejects an illegal placement and shows a red preview for it', () => {
+    render(<App />);
+    const own = grid('Your fleet');
+    const j1 = within(own).getByRole('button', { name: 'J1, water' });
+    fireEvent.mouseEnter(j1);
+    expect(j1.className).toContain('preview-bad');
+    fireEvent.click(j1);
+    expect(shipCells(own)).toBe(0);
+
+    const a1 = within(own).getByRole('button', { name: 'A1, water' });
+    fireEvent.mouseEnter(a1);
+    expect(a1.className).toContain('preview-ok');
+    expect(within(own).getByRole('button', { name: 'E1, water' }).className).toContain(
+      'preview-ok',
+    );
+  });
+
+  it('picks a placed ship back up when clicked', () => {
+    render(<App />);
+    const own = grid('Your fleet');
+    fireEvent.click(within(own).getByRole('button', { name: 'A1, water' }));
+    fireEvent.click(within(own).getByRole('button', { name: 'A3, water' })); // battleship
+    expect(shipCells(own)).toBe(9);
+    fireEvent.click(within(own).getByRole('button', { name: 'C1, ship' })); // pick up carrier
+    expect(shipCells(own)).toBe(4);
+    expect(screen.getByRole('button', { name: /^Carrier/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
+  it('Randomize fills the fleet and every press produces a different one', () => {
+    render(<App />);
+    const own = grid('Your fleet');
+    const randomize = screen.getByRole('button', { name: 'Randomize fleet' });
+    fireEvent.click(randomize);
+    expect(shipCells(own)).toBe(17);
+    expect(screen.getByRole('button', { name: 'Continue to coin flip' })).toBeEnabled();
+    const seen = new Set<string>([shipKeys(own)]);
+    for (let i = 0; i < 5; i++) {
+      fireEvent.click(randomize);
+      expect(shipCells(own)).toBe(17);
+      seen.add(shipKeys(own));
+    }
+    expect(seen.size).toBeGreaterThan(1);
+  });
+});
+
+describe('coin flip', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('cannot be pressed twice and the result is definitive', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Randomize fleet' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to coin flip' }));
+    const flip = screen.getByRole('button', { name: 'Flip coin' });
+    expect(flip).toBeEnabled();
+    fireEvent.click(flip);
+    expect(flip).toBeDisabled();
+    expect(screen.getByRole('status').textContent).toContain('Flipping');
+    fireEvent.click(flip);
+    act(() => {
+      vi.advanceTimersByTime(COIN_FLIP_MS + 10);
+    });
+    expect(screen.queryByRole('button', { name: 'Flip coin' })).toBeNull();
+    expect(screen.getByRole('status').textContent).toMatch(/^(Heads|Tails)/);
+    expect(screen.getByRole('grid', { name: 'Enemy waters' })).toBeInTheDocument();
+  });
+
+  it('the AI does not fire while the coin is still spinning', () => {
+    startWith('tails');
+    // Reveal has just happened; the AI's 250 ms clock starts now, not during the spin.
+    expect(marks(grid('Your fleet'))).toBe(0);
     act(() => {
       vi.advanceTimersByTime(AI_DELAY_MS + 10);
     });
-    const after = own.querySelectorAll('.cell.miss, .cell.hit').length;
-    expect(after - before).toBe(1);
+    expect(marks(grid('Your fleet'))).toBe(1);
     expect(screen.getByRole('status').textContent).toContain('Your turn');
   });
 
-  it("keeps the human's shot result visible after the AI replies", () => {
-    render(<App />);
-    // AI cruiser occupies B1–D1 in the fixed fleet
-    fireEvent.click(screen.getByRole('button', { name: 'B1, water' }));
-    expect(screen.getByRole('status').textContent).toContain('Hit!');
+  it('heads: human fires first and the AI replies once after 250 ms', () => {
+    startWith('heads');
+    expect(screen.getByRole('status').textContent).toContain('Your turn');
+    act(() => {
+      vi.advanceTimersByTime(AI_DELAY_MS * 4);
+    });
+    expect(marks(grid('Your fleet'))).toBe(0);
+
+    fireEvent.click(within(grid('Enemy waters')).getByRole('button', { name: 'J10, water' }));
+    expect(screen.getByRole('status').textContent).toContain('Enemy is thinking');
+    expect(within(grid('Enemy waters')).getByRole('button', { name: 'A1, water' })).toBeDisabled();
     act(() => {
       vi.advanceTimersByTime(AI_DELAY_MS + 10);
     });
-    const text = screen.getByRole('status').textContent ?? '';
-    expect(text).toContain('Hit!');
-    expect(text).toMatch(/Enemy (missed|hit|sank)/);
+    expect(marks(grid('Your fleet'))).toBe(1);
+    act(() => {
+      vi.advanceTimersByTime(AI_DELAY_MS * 4);
+    });
+    expect(marks(grid('Your fleet'))).toBe(1);
+    expect(screen.getByRole('status').textContent).toMatch(/Enemy (missed|hit|sank)/);
+  });
+});
+
+describe('game over and play again', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('shows the modal with shot counts, reveals enemy ships, and Play again returns to placement', () => {
+    startWith('tails');
+    // Let the AI win: it fires every 250 ms once the human gives it turns; we shoot misses-or-not
+    // until the game ends (AI always finishes within 100 shots).
+    for (let i = 0; i < 100 && !screen.queryByRole('dialog'); i++) {
+      act(() => {
+        vi.advanceTimersByTime(AI_DELAY_MS + 10);
+      });
+      if (screen.queryByRole('dialog')) break;
+      const enemy = grid('Enemy waters');
+      const target = within(enemy)
+        .getAllByRole('button')
+        .find((b) => !b.hasAttribute('disabled'));
+      if (target) fireEvent.click(target);
+    }
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.textContent).toMatch(/You (win|lose)/);
+    expect(dialog.textContent).toMatch(/Your shots: \d+ · Enemy shots: \d+/);
+    expect(shipCells(grid('Enemy waters')) + marks(grid('Enemy waters'))).toBeGreaterThanOrEqual(
+      17,
+    );
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Play again' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Randomize fleet' })).toBeInTheDocument();
+    expect(shipCells(grid('Your fleet'))).toBe(0);
   });
 
-  it('disables enemy cells while the AI is thinking', () => {
-    render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: 'J10, water' }));
-    expect(screen.getByRole('button', { name: 'A1, water' })).toBeDisabled();
+  it('New game mid-AI-turn cancels the pending AI shot', () => {
+    startWith('tails');
+    fireEvent.click(screen.getByRole('button', { name: 'New game' }));
+    expect(screen.getByRole('button', { name: 'Randomize fleet' })).toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(AI_DELAY_MS * 4);
+    });
+    expect(marks(grid('Your fleet'))).toBe(0);
+    expect(screen.queryByRole('grid', { name: 'Enemy waters' })).toBeNull();
   });
 });

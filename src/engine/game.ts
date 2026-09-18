@@ -1,15 +1,19 @@
-import { allSunk, isSunk, placeShip, emptyBoard, shipAt } from './board';
-import { FIXED_AI_FLEET, FIXED_HUMAN_FLEET } from './fleet';
+import { allSunk, canPlace, isSunk, placeShip, emptyBoard, removeShip, shipAt } from './board';
+import { FIXED_AI_FLEET, FIXED_HUMAN_FLEET, randomFleet } from './fleet';
+import { makeRng } from './rng';
 import {
   BOARD_SIZE,
+  SHIP_KINDS,
   coordKey,
   inBounds,
   type AIShot,
   type AIView,
   type Board,
+  type Coin,
   type Coord,
   type GameState,
   type Player,
+  type RNG,
   type Ship,
   type ShotResult,
 } from './types';
@@ -19,6 +23,48 @@ const boardWith = (ships: readonly Ship[]): Board =>
 
 export type Fleets = { human: readonly Ship[]; ai: readonly Ship[] };
 
+/** Fresh game in the placement phase: empty human board, AI fleet drawn from the seed. */
+export const startGame = (seed: number): GameState => ({
+  phase: 'placement',
+  turn: 'human',
+  human: emptyBoard(),
+  ai: boardWith(randomFleet(makeRng(seed))),
+  aiShots: [],
+  seed,
+});
+
+const withHuman = (state: GameState, human: Board): GameState => ({ ...state, human });
+
+/** Place (or move) one of the human's ships; illegal placements return the state unchanged. */
+export const placeHumanShip = (state: GameState, ship: Ship): GameState => {
+  if (state.phase !== 'placement') return state;
+  const without = removeShip(state.human, ship.kind);
+  return canPlace(without, ship) ? withHuman(state, placeShip(without, ship)) : state;
+};
+
+export const removeHumanShip = (state: GameState, kind: Ship['kind']): GameState =>
+  state.phase === 'placement' ? withHuman(state, removeShip(state.human, kind)) : state;
+
+export const setHumanFleet = (state: GameState, ships: readonly Ship[]): GameState =>
+  state.phase === 'placement' ? withHuman(state, boardWith(ships)) : state;
+
+export const fleetComplete = (board: Board): boolean =>
+  SHIP_KINDS.every((k) => board.ships.some((s) => s.kind === k));
+
+/** placement → coinflip; a no-op unless all five ships are down. */
+export const confirmFleet = (state: GameState): GameState =>
+  state.phase === 'placement' && fleetComplete(state.human)
+    ? { ...state, phase: 'coinflip' }
+    : state;
+
+/** Flip once: heads → human first, tails → AI first. Idempotent — a second call is a no-op. */
+export const flipCoin = (state: GameState, rng: RNG): GameState => {
+  if (state.phase !== 'coinflip') return state;
+  const coin: Coin = rng() < 0.5 ? 'heads' : 'tails';
+  return { ...state, coin, turn: coin === 'heads' ? 'human' : 'ai', phase: 'playing' };
+};
+
+/** Start directly in the playing phase with the given fleets (tests, selfplay). Human fires first. */
 export const newGame = (
   seed: number,
   fleets: Fleets = { human: FIXED_HUMAN_FLEET, ai: FIXED_AI_FLEET },
@@ -40,6 +86,9 @@ export const fire = (
 ): { state: GameState; result: ShotResult } => {
   if (state.phase === 'gameover') {
     return { state, result: { kind: 'invalid', reason: 'game-over' } };
+  }
+  if (state.phase !== 'playing') {
+    return { state, result: { kind: 'invalid', reason: 'not-your-turn' } };
   }
   if (state.turn !== shooter) {
     return { state, result: { kind: 'invalid', reason: 'not-your-turn' } };
