@@ -364,3 +364,18 @@ touching ships.") made it as wide as the sentence, and `.placement`'s `flex-wrap
 Fix: `.tray { flex: 0 1 20rem }` so the hints wrap inside a fixed column. Verified 1400 px
 (side-by-side) and 375 px (stacked). Lesson: RTL tests cannot see layout; every PR that adds text to
 a flex row needs the desktop screenshot, not only the phone one.
+
+### 25. History hook: two lint-rejected drafts before the right shape (2026-09-18, PR 6, layer: React state — caught by `eslint-plugin-react-hooks`)
+
+Miss, not a shipped bug. First draft of `useMatchHistory` kept `localStorage` in a ref written
+during render (`react-hooks/refs`), second draft called `setMatches` inside the game-over effect and
+mirrored to storage from a second effect (`react-hooks/set-state-in-effect`). Both "worked" in
+Vitest; both are the exact patterns that double-fire under StrictMode and would have recorded a
+match twice on a dev build.
+
+Fix: a tiny external store (`createMatchStore`: load once, `add`/`clear`, notify) read through
+`useSyncExternalStore`; the game-over effect only calls `store.add`, and dedupe by `seed` lives in
+pure `appendMatch`. While writing the "persists across reload" test I also caught that a
+module-level singleton store would have made that test vacuous (the list survives unmount without
+touching storage), so the store is created per mount. Lesson: the React lint rules were right both
+times; and when a persistence test can pass without the persistence layer, the test is the bug.

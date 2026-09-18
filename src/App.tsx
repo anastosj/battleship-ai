@@ -3,13 +3,16 @@ import { Board } from './ui/Board';
 import { CoinFlip } from './ui/CoinFlip';
 import { FleetPanel } from './ui/FleetPanel';
 import { GameOverModal } from './ui/GameOverModal';
+import { HistoryPanel } from './ui/HistoryPanel';
 import { PlacementScreen } from './ui/PlacementScreen';
 import { useGame } from './ui/useGame';
+import { useMatchHistory } from './ui/useMatchHistory';
 
 /** `seed` pins the AI fleet, randomize draws, and the coin flip (tests only). */
 export const App = ({ seed }: { seed?: number } = {}) => {
   const g = useGame(seed);
   const { game, flipping } = g;
+  const history = useMatchHistory(game);
   const humanTurn = game.phase === 'playing' && !flipping && game.turn === 'human';
 
   return (
@@ -41,6 +44,9 @@ export const App = ({ seed }: { seed?: number } = {}) => {
           confirm={g.confirm}
           setDifficulty={g.setDifficulty}
         />
+      )}
+      {game.phase === 'placement' && (
+        <HistoryPanel matches={history.matches} clear={history.clear} />
       )}
 
       {(game.phase === 'coinflip' || flipping) && (
