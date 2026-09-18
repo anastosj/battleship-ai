@@ -7,7 +7,7 @@ every PR (misses and corrections included), is [`BUGLOG.md`](./BUGLOG.md); numbe
 its entries. The game was built by Devin in twelve thin vertical slices (PR 1 skeleton → PR 2 AI →
 PR 3 placement/coin flip → PR 4 polish → PR 5 difficulty → PR 6–7 history and leaderboard →
 PR 8 theme → PR 9–12 feedback and mobile passes), each one deployed and played in a real browser
-before the next began, then put through a security scan. Thirty-six entries were logged; the ones
+before the next began, then put through a security scan. Thirty-seven entries were logged; the ones
 worth reading are the ones the type system and the fuzzer did not catch.
 
 ## How bugs were found
@@ -133,7 +133,7 @@ Final shape: a tiny external store read through `useSyncExternalStore`, created 
 module-level singleton would have made the "persists across reload" test pass without touching
 storage. When a persistence test can pass without the persistence layer, the test is the bug.
 
-### S1. Match history cap enforced on write but not on read (security scan → PR #21)
+### 37. Match history cap enforced on write but not on read (#37 — security scan → PR #21)
 
 `MAX_MATCHES` (100) was applied only in `appendMatch`. Anything same-origin that could write
 `battleship-ai.matches.v1` (an extension, devtools, a future XSS) could plant thousands of valid
