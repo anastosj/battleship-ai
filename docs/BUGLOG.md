@@ -182,9 +182,9 @@ the AI finishing every game: avg ≈ 50; over 1,000 self-play games the winner a
 Root cause: The number in the spec was written before any code existed and was a guess. A
 parity-Hunt + line-extending Target AI on a 10×10 board is well known to average around 50.
 
-Fix: Test band set to 46–56 around the measured mean, with N = 300 so seed noise is ≈ ±1. Flagged
-to the owner rather than silently changing the spec (rule: "if the spec turns out wrong, stop and
-tell me").
+Fix: Flagged to the owner rather than silently changing the spec (rule: "if the spec turns out
+wrong, stop and tell me"). Owner's decision: keep the band wide, 46–65, to tolerate game variance;
+spec §5.4 updated to match. Test uses N = 300 so seed noise is ≈ ±1.
 
 ### 10. `node:` imports in the isolation test broke typecheck (2026-09-18, PR 2, layer: build)
 
