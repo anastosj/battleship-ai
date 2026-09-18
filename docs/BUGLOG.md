@@ -456,3 +456,11 @@ VT323 is thin, so the theme raises the root font-size from 16 px to 20 px. `--ce
 test failed, because no test measures layout. Fix: pin the desktop cap in pixels
 (`min(35px, …)`). Lesson (again, see #24): anything sized in `rem` moves when the theme
 touches the root font size; a desktop-width screenshot is the only check that catches it.
+
+### 31. Scanlines cut after the user tried the build (2026-09-18, PR 8, layer: UI — user feedback)
+
+The brief offered scanlines as an option and the user said keep them; after playing the
+preview they found the overlay made the boards less clear and asked for it to go. Removed the
+`body::before` overlay; the phosphor palette, glow and VT323 carry the theme on their own.
+Lesson: a decorative choice approved from a description is not approved until it has been
+played with — ship the preview before asking for the yes.
