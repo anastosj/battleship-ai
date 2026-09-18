@@ -24,12 +24,14 @@ description: Play Battleship AI locally or on its live deployment, including AI 
   presses and count 17 cells; do not assume ships are separated.
 - The live coin is random. A seed prop exists in code, not in the URL. Retry
   New game to observe both outcomes rather than changing RNG/state.
-- Observe the roughly 1000 ms Flipping interval separately from the roughly
-  500 ms AI timer after Tails reveal. Double-click Flip with measured native
-  inputs; the second press should be disabled.
-- To test pending-Tails cancellation, issue native New game about 1100 ms
-  after Flip, then measure reveal-to-reset. Count the attempt only if Tails
-  occurred and reset preceded the opening AI shot.
+- Read the current `COIN_FLIP_MS`, `COIN_REVEAL_MS`, and `AI_DELAY_MS` before
+  timing tests. The coin currently spins for 1000 ms, holds the landed face
+  for 1500 ms, then (for Tails) waits another 500 ms for the opening AI shot.
+  A read-only MutationObserver on coin classes and board appearance gives
+  distinct timestamps for these stages.
+- To test pending-Tails cancellation, click New game during the landed-face
+  hold or before the opening AI timer completes. Count the attempt only if
+  Tails occurred and reset preceded the opening AI shot.
 - Play again should clear ships as well as shots, returning to placement.
 
 ## Local setup
@@ -79,3 +81,22 @@ description: Play Battleship AI locally or on its live deployment, including AI 
 ## Devin Secrets Needed
 
 None for local or public live browser gameplay.
+
+## Phone-size live smoke
+
+- Use a 390x844 viewport with mobile metrics and touch enabled; viewport
+  resizing alone does not prove touch behavior. Verify `(hover: hover)` is
+  false, and dispatch actual touch input for placement and firing.
+- During placement, Your fleet comes before the ship tray; during combat,
+  Enemy waters comes before Your fleet. Compare element rectangles and
+  capture screenshots rather than relying on DOM order.
+- After tapping to place, pick up, and re-place a ship, verify no
+  `.preview-ok` or `.preview-bad` cells remain. Do not confuse a brief browser
+  tap highlight with a persistent application hover state.
+- Before checking pinned status, verify scrolling actually occurred and
+  `.status` top is zero. Synthetic CDP scroll gestures may not move the
+  document; native wheel input over the phone viewport can establish the
+  scroll precondition while subsequent gameplay remains touch-based.
+- Across thinking and response states, compare status height, board document
+  coordinates, and document scrollWidth against viewport width. Keep error
+  collection attached across desktop and phone reloads.
