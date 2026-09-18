@@ -532,6 +532,7 @@ asking what the other input modes now do.
 status grew and shrank every turn and pushed the enemy grid up and down under the thumb.
 The desktop `min-height: 1.5em` was written for a single wide line and never revisited when
 the status became sticky in PR 11. Phone status is now a fixed three-line box (two for the
-report, one for the turn cue on its own line); measured constant 99 px across eight turns.
+report, one for the turn cue on its own line); measured constant 99 px across eight turns. Review caught that `overflow: hidden` would
+clip the cue for players with 200 % text size (F7); the box scrolls instead.
 Lesson: anything `position: sticky` with variable text needs a fixed height — the jitter
 is invisible with a mouse and obvious with a thumb.
