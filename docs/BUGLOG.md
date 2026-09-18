@@ -243,3 +243,46 @@ the preview cells in state on `mouseenter` would have left a stale horizontal gh
 **R** with the mouse still — the failure §8.1 predicts ("hover preview surviving rotation"). Also:
 hovering a cell occupied by _another_ ship shows no preview, because a click there picks that ship
 up instead of placing.
+
+### 15. Rotate button changed width and nudged the board (2026-09-18, PR 3 live test → fixed PR 4, layer: ui)
+
+Symptom (found by playing the deployed PR 3 build, not by any test): the label read
+"Rotate (horizontal) — R" / "Rotate (vertical) — R", so pressing **R** changed the button width, the
+controls row reflowed, and the placement board jumped ~1 rem sideways under the pointer.
+
+Root cause: state text embedded inside the button label — layout depends on which word is longer.
+
+Fix: the button label is the constant "Rotate (R)" and the orientation lives in a fixed-min-width
+`aria-live` span next to it (`aria-describedby`), so screen readers still hear the orientation and
+nothing moves. Test: `tests/app.test.tsx` asserts the accessible description flips to "Vertical".
+A jsdom test cannot catch a layout shift; only the browser run did.
+
+### 16. Ship and sunk cells had no glyph (2026-09-18, PR 4 / spec F7, layer: ui)
+
+Symptom: own-ship cells were a grey square with no text and sunk cells reused the hit "✕", so
+"ship vs water" and "hit vs sunk" were conveyed by colour alone — a direct §F7 / §10 violation that
+shipped in three PRs because the aria-labels were correct and the tests read the labels, not the
+glyphs.
+
+Fix: a single `GLYPH` table in `Board.tsx` (`▮` ship, `•` miss, `✕` hit, `☒` sunk), glyph spans
+`aria-hidden` so labels stay "B7, sunk". Also darkened the miss glyph (`#6b7c8c` → `#3d4c5a`) —
+the old one measured ≈3.9:1 on its background, under WCAG AA's 4.5:1.
+
+### 17. Fixed-size grid overflowed phones (2026-09-18, PR 4 / spec F6, layer: ui)
+
+Symptom: cells were hard-coded to `2.2rem`, so a 10×10 board is 370 px wide before padding —
+horizontal scroll on a 360 px phone even after the boards stacked.
+
+Fix: `--cell: min(2.2rem, calc((100vw - 2rem - 18px) / 10))` and a `max-width: 720px` query that
+stacks boards/placement columns and shrinks the modal. Not covered by jsdom; verified in the
+browser at 375 px.
+
+### 18. Mobile modal 0.5 rem wider than the viewport (2026-09-18, PR 4 / #6, layer: ui — caught by Devin Review)
+
+Symptom: the `max-width: 720px` rule set `.modal { width: calc(100vw - 2rem); padding: 1.25rem }`
+under the default `content-box` sizing, so the rendered dialog was `100vw + 0.5rem` and clipped at
+both edges on phones.
+
+Fix: `box-sizing: border-box` on the modal. First automated review finding on this repo; a jsdom
+test cannot see it and my own "verified at 375 px" claim in #17 was written before the browser
+check — a miss on top of the miss.

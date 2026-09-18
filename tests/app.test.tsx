@@ -5,6 +5,7 @@ import { randomFleet } from '../src/engine/fleet';
 import { confirmFleet, flipCoin, setHumanFleet, startGame } from '../src/engine/game';
 import { makeRng } from '../src/engine/rng';
 import { AI_DELAY_MS, COIN_FLIP_MS } from '../src/ui/useGame';
+import { ErrorBoundary } from '../src/ui/ErrorBoundary';
 
 const grid = (name: string) => screen.getByRole('grid', { name });
 const shipCells = (g: HTMLElement) => g.querySelectorAll('.cell.ship').length;
@@ -60,10 +61,13 @@ describe('placement', () => {
     );
 
     fireEvent.keyDown(window, { key: 'r' });
-    expect(screen.getByRole('button', { name: /^Rotate \(vertical\)/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Rotate (R)' })).toHaveAccessibleDescription(
+      'Vertical',
+    );
     fireEvent.click(within(own).getByRole('button', { name: 'A2, water' }));
     expect(shipCells(own)).toBe(9); // battleship vertical A2–A5
     expect(within(own).getByRole('button', { name: 'A5, ship' })).toBeInTheDocument();
+    expect(within(own).getByRole('button', { name: 'A5, ship' }).textContent).toBe('▮');
   });
 
   it('rejects an illegal placement and shows a red preview for it', () => {
@@ -211,5 +215,23 @@ describe('game over and play again', () => {
     });
     expect(marks(grid('Your fleet'))).toBe(0);
     expect(screen.queryByRole('grid', { name: 'Enemy waters' })).toBeNull();
+  });
+});
+
+describe('error boundary', () => {
+  it('renders a recovery message instead of a white screen when a child throws', () => {
+    const Boom = () => {
+      throw new Error('kaboom');
+    };
+    const silence = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    render(
+      <ErrorBoundary>
+        <Boom />
+      </ErrorBoundary>,
+    );
+    silence.mockRestore();
+    expect(screen.getByRole('alert').textContent).toContain('Something went wrong');
+    expect(screen.getByText('kaboom')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reload the game' })).toBeInTheDocument();
   });
 });

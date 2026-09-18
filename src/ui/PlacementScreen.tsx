@@ -93,9 +93,12 @@ export const PlacementScreen = ({
           })}
         </ul>
         <div className="controls">
-          <button type="button" onClick={rotate}>
-            Rotate ({orientation === 'h' ? 'horizontal' : 'vertical'}) — R
+          <button type="button" onClick={rotate} aria-describedby="orientation">
+            Rotate (R)
           </button>
+          <span id="orientation" className="orientation" aria-live="polite">
+            {orientation === 'h' ? 'Horizontal' : 'Vertical'}
+          </span>
           <button type="button" onClick={randomize}>
             Randomize fleet
           </button>
@@ -111,7 +114,7 @@ export const PlacementScreen = ({
         <p className="hint">
           {selected === undefined
             ? 'All ships placed. Click a ship on the board to move it, or continue.'
-            : `Placing ${SHIP_NAMES[selected]}: click a cell for its bow. Click a placed ship to pick it up.`}
+            : `Placing ${SHIP_NAMES[selected]}: click or focus a cell and press Enter for its bow. Click a placed ship to pick it up.`}
         </p>
       </div>
       <Board

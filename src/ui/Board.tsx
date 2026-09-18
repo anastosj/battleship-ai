@@ -4,6 +4,9 @@ import { BOARD_SIZE, coordKey, type Board as BoardState, type Coord } from '../e
 
 export type Preview = { cells: readonly Coord[]; legal: boolean };
 
+/** Every non-water state has a glyph so it is never conveyed by colour alone (F7). */
+const GLYPH = { water: '', ship: '▮', miss: '•', hit: '✕', sunk: '☒' } as const;
+
 type Props = {
   title: string;
   board: BoardState;
@@ -45,7 +48,7 @@ export const Board = ({
             const sunk = hitShip !== undefined && isSunk(board, hitShip);
             const ship = showShips ? shipAt(board, c) : undefined;
             const state = sunk ? 'sunk' : (mark ?? (ship ? 'ship' : 'water'));
-            const glyph = mark === 'hit' ? '✕' : mark === 'miss' ? '•' : '';
+            const glyph = GLYPH[state];
             const previewClass = previewKeys.has(coordKey(c))
               ? preview?.legal
                 ? ' preview-ok'
@@ -63,7 +66,7 @@ export const Board = ({
                 onMouseEnter={onCellHover ? () => onCellHover(c) : undefined}
                 onFocus={onCellHover ? () => onCellHover(c) : undefined}
               >
-                {glyph}
+                <span aria-hidden="true">{glyph}</span>
               </button>
             );
           }),
