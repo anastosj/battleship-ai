@@ -475,3 +475,22 @@ it reads as a console indicator, and reduced-motion users get a static amber but
 Tested: the class is absent with an empty board and present after Randomize. Lesson: a
 disabled → enabled transition is not a call to action; it took a person playing the game to
 say so.
+
+### 33. The coin's landed face was never shown (2026-09-18, PR 10, layer: UI/state — found by the testing agent, confirmed by the user)
+
+The theme PR drew an anchor (heads) and a crosshair (tails) on the coin, but the flip timer's
+single `flipDone` both revealed the result and started play, and `App` unmounts `CoinFlip`
+the moment `flipping` is false. A MutationObserver in the live test measured it: `heads
+spinning` → coin removed at 1002.8 ms. The landed face existed only in the code; the player
+read the outcome from the status line. The user's ask: "show the outcome of the toss for
+longer." Fix: a second UI flag, `revealing`, set by `flipDone` and cleared by a
+`COIN_REVEAL_MS` (1.5 s) timer; `App` and the AI-turn effect gate on `coinBusy = flipping ||
+revealing`, so the board and the AI's 500 ms clock start only after the hold. The coin gets a
+`landed` pop for feedback (static under reduced-motion).
+
+Test miss on the first attempt: advancing fake timers by `COIN_FLIP_MS + COIN_REVEAL_MS` in one
+`act` didn't finish the reveal — the reveal timer is armed by an effect that only runs after
+React commits `revealing`, which happens when `act` returns, after the clock has already
+moved. Split into two `act`s (`settleCoin()`); the new test also pins that the AI has not fired
+while the landed coin is still on screen. Lesson: a UI element that the design says is
+visible needs a test that it stays mounted, not just that its class is right.

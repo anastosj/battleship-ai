@@ -28,8 +28,10 @@ import {
 } from '../engine/types';
 
 export const AI_DELAY_MS = 500;
-/** How long the coin "spins" before the result is shown and play begins. */
+/** How long the coin "spins" before the landed face is shown. */
 export const COIN_FLIP_MS = 1000;
+/** How long the landed face stays on screen before play begins. */
+export const COIN_REVEAL_MS = 1500;
 
 export type UIState = {
   game: GameState;
@@ -38,8 +40,10 @@ export type UIState = {
   /** Placement: which ship the next board click places (undefined once all are down). */
   selected: ShipKind | undefined;
   orientation: Orientation;
-  /** True between pressing "Flip coin" and the result being revealed. */
+  /** True between pressing "Flip coin" and the landed face being shown. */
   flipping: boolean;
+  /** True while the landed face is held on screen before play begins. */
+  revealing: boolean;
 };
 
 type Action =
@@ -52,6 +56,7 @@ type Action =
   | { type: 'difficulty'; difficulty: Difficulty }
   | { type: 'flip'; roll: number }
   | { type: 'flipDone' }
+  | { type: 'revealDone' }
   | { type: 'fire'; shooter: Player; at: Coord }
   | { type: 'reset'; seed: number; difficulty: Difficulty };
 
@@ -112,10 +117,13 @@ export const reducer = (ui: UIState, action: Action): UIState => {
       return {
         ...ui,
         flipping: false,
+        revealing: true,
         lastHuman: heads ? 'Heads — you have the first salvo.' : 'Tails — enemy opens fire.',
         lastAi: '',
       };
     }
+    case 'revealDone':
+      return ui.revealing ? { ...ui, revealing: false } : ui;
     case 'fire': {
       const { state, result } = fire(ui.game, action.shooter, action.at);
       const text = describe(action.shooter, result);
@@ -136,6 +144,7 @@ export const init = (seed: number, difficulty: Difficulty = 'hard'): UIState => 
     selected: nextUnplaced(game),
     orientation: 'h',
     flipping: false,
+    revealing: false,
   };
 };
 
@@ -153,7 +162,8 @@ export const useGame = (initialSeed?: number) => {
   if (rng.current === null) rng.current = uiRng(ui.game.seed);
   const draw = (): RNG => rng.current ?? (rng.current = uiRng(ui.game.seed));
 
-  const { game, flipping } = ui;
+  const { game, flipping, revealing } = ui;
+  const coinBusy = flipping || revealing;
 
   useEffect(() => {
     if (!flipping) return;
@@ -162,13 +172,19 @@ export const useGame = (initialSeed?: number) => {
   }, [flipping]);
 
   useEffect(() => {
-    if (flipping || game.phase !== 'playing' || game.turn !== 'ai') return;
+    if (!revealing) return;
+    const timer = setTimeout(() => dispatch({ type: 'revealDone' }), COIN_REVEAL_MS);
+    return () => clearTimeout(timer);
+  }, [revealing]);
+
+  useEffect(() => {
+    if (coinBusy || game.phase !== 'playing' || game.turn !== 'ai') return;
     const timer = setTimeout(() => {
       const at = chooseShotFor(game.difficulty, toAIView(game), rng.current ?? uiRng(game.seed));
       dispatch({ type: 'fire', shooter: 'ai', at });
     }, AI_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [game, flipping]);
+  }, [game, coinBusy]);
 
   return {
     game,
@@ -177,6 +193,8 @@ export const useGame = (initialSeed?: number) => {
     selected: ui.selected,
     orientation: ui.orientation,
     flipping,
+    /** The coin screen is still showing (spinning or holding the landed face). */
+    coinBusy,
     select: (kind: ShipKind) => dispatch({ type: 'select', kind }),
     rotate: () => dispatch({ type: 'rotate' }),
     placeAt: (at: Coord) => dispatch({ type: 'place', at }),
