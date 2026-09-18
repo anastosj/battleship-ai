@@ -155,7 +155,7 @@ Root cause: Destroyer at (3,7)(3,8) touching a Battleship (4,6)–(4,9). Hits in
 spec's tie-break ("follow the axis of the most recent prior hit") picked vertical and resolved
 (3,8)+(4,8) — the wrong pair. (4,8) was wrongly marked dead; (3,7) was wrongly left alive but
 boxed in by targeted cells. Target mode then had no candidate and returned to Hunt. The
-inference in §5.3 is a heuristic and *can* be wrong; the spec had no recovery path for that case.
+inference in §5.3 is a heuristic and _can_ be wrong; the spec had no recovery path for that case.
 
 Fix: When the normal target candidates are exhausted but unresolved hits remain, widen to the
 connected component of hit cells and target untargeted cells that extend a line of hits, skipping
@@ -172,7 +172,7 @@ wrong axis (fuzz seed 874)".
 Would have caught earlier: The scenario tests each ran one hand-picked shot order. The bug needed
 a specific order of four hits; only a fuzz over random fleets with a ground-truth "never abandon a
 live hit" oracle found it. The oracle still flags 1/5,000 games (seed 2765) where the AI targets
-next to a cell it *believes* is live but isn't — that one is information-limited, not a bug.
+next to a cell it _believes_ is live but isn't — that one is information-limited, not a bug.
 
 ### 9. Spec's shot-count band (55–65) does not match the AI it specifies (2026-09-18, PR 2, layer: test / spec — flagged)
 
