@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { DIFFICULTY_NAMES } from './ai';
 import { Board } from './ui/Board';
 import { CoinFlip } from './ui/CoinFlip';
@@ -17,6 +18,12 @@ export const App = ({ seed }: { seed?: number } = {}) => {
   const history = useMatchHistory(game);
   const leaderboard = useLeaderboard(game);
   const humanTurn = game.phase === 'playing' && !coinBusy && game.turn === 'human';
+  const report = `${g.lastHuman} ${g.lastAi}`.trim();
+  /** The phone status box scrolls; a new report must start at its top. */
+  const status = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (status.current) status.current.scrollTop = 0;
+  }, [report, humanTurn]);
 
   return (
     <main>
@@ -61,8 +68,8 @@ export const App = ({ seed }: { seed?: number } = {}) => {
 
       {(game.phase === 'playing' || game.phase === 'gameover') && !coinBusy && (
         <>
-          <p className="status" role="status" aria-live="polite">
-            {`${g.lastHuman} ${g.lastAi}`.trim()}
+          <p className="status" role="status" aria-live="polite" ref={status}>
+            {report}
             {game.phase === 'playing' && (
               <span className="turn">
                 {' '}
