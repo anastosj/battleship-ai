@@ -82,7 +82,7 @@ export const App = ({ seed }: { seed?: number } = {}) => {
               />
               <FleetPanel title="Your ships" board={game.human} />
             </div>
-            <div className="side">
+            <div className="side enemy">
               <Board
                 title="Enemy waters"
                 board={game.ai}

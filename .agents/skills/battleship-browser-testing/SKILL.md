@@ -25,7 +25,7 @@ description: Play Battleship AI locally or on its live deployment, including AI 
 - The live coin is random. A seed prop exists in code, not in the URL. Retry
   New game to observe both outcomes rather than changing RNG/state.
 - Observe the roughly 1000 ms Flipping interval separately from the roughly
-  250 ms AI timer after Tails reveal. Double-click Flip with measured native
+  500 ms AI timer after Tails reveal. Double-click Flip with measured native
   inputs; the second press should be disabled.
 - To test pending-Tails cancellation, issue native New game about 1100 ms
   after Flip, then measure reveal-to-reset. Count the attempt only if Tails
@@ -65,7 +65,7 @@ description: Play Battleship AI locally or on its live deployment, including AI 
 
 ## Timing-sensitive UI tests
 
-- The walking skeleton schedules AI replies after 250 ms. General computer-tool
+- The walking skeleton schedules AI replies after 500 ms. General computer-tool
   click batching may exceed this window, so measure actual pointer timestamps.
 - For native timed inputs on Linux, query `xrandr --current`, scale screenshot
   coordinates to the actual display, and use xdotool mousedown/mouseup sequences

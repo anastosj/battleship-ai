@@ -99,6 +99,25 @@ describe('placement', () => {
     );
   });
 
+  it('a touch tap leaves no preview outline stuck under the finger', () => {
+    render(<App />);
+    const own = grid('Your fleet');
+    const j1 = within(own).getByRole('button', { name: 'J1, water' });
+    fireEvent.mouseEnter(j1); // touch browsers synthesize hover on tap
+    fireEvent.pointerDown(j1, { pointerType: 'mouse' });
+    fireEvent.click(j1); // illegal: a mouse keeps the red preview under the cursor
+    expect(j1.className).toContain('preview-bad');
+
+    fireEvent.pointerDown(j1, { pointerType: 'touch' });
+    fireEvent.click(j1);
+    expect(own.querySelectorAll('.preview-ok, .preview-bad').length).toBe(0);
+
+    // A later keyboard activation (no pointerdown) must not inherit the touch cleanup.
+    fireEvent.focus(j1);
+    fireEvent.click(j1);
+    expect(j1.className).toContain('preview-bad');
+  });
+
   it('picks a placed ship back up when clicked', () => {
     render(<App />);
     const own = grid('Your fleet');

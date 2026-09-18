@@ -94,11 +94,16 @@ button {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   cursor: pointer;
+  /* No double-tap-to-zoom on rapid taps (grid cells especially). */
+  touch-action: manipulation;
 }
-button:hover:not(:disabled) {
-  background: var(--ink);
-  color: var(--bg);
-  text-shadow: none;
+/* Hover styles only where a real pointer exists: touch keeps :hover on the last tapped element. */
+@media (hover: hover) {
+  button:hover:not(:disabled) {
+    background: var(--ink);
+    color: var(--bg);
+    text-shadow: none;
+  }
 }
 button:disabled {
   color: var(--ink-faint);
@@ -142,9 +147,11 @@ input:focus-visible {
   cursor: pointer;
   text-transform: none;
 }
-.cell:hover:not(:disabled) {
-  background: var(--panel-2);
-  color: var(--ink);
+@media (hover: hover) {
+  .cell:hover:not(:disabled) {
+    background: var(--panel-2);
+    color: var(--ink);
+  }
 }
 .cell:disabled {
   cursor: default;
@@ -184,9 +191,11 @@ button.primary {
   border-color: var(--ink);
   box-shadow: var(--glow);
 }
-button.primary:hover:not(:disabled) {
-  background: var(--amber);
-  border-color: var(--amber);
+@media (hover: hover) {
+  button.primary:hover:not(:disabled) {
+    background: var(--amber);
+    border-color: var(--amber);
+  }
 }
 button.primary:disabled {
   background: var(--panel);
@@ -240,9 +249,11 @@ button.big {
   text-transform: none;
   letter-spacing: 0;
 }
-.ship-pick:hover:not(:disabled) {
-  background: var(--panel-2);
-  color: var(--ink);
+@media (hover: hover) {
+  .ship-pick:hover:not(:disabled) {
+    background: var(--panel-2);
+    color: var(--ink);
+  }
 }
 .ship-pick.selected {
   border-color: var(--amber);
@@ -409,6 +420,7 @@ button.big {
 .modal-backdrop {
   position: fixed;
   inset: 0;
+  z-index: 10;
   background: rgba(3, 10, 6, 0.8);
   display: grid;
   place-items: center;
@@ -447,7 +459,8 @@ button.big {
     gap: 0.5rem;
   }
   header h1 {
-    font-size: 1.6rem;
+    font-size: 1.45rem;
+    letter-spacing: 0.03em;
     margin: 0.25rem 0;
   }
   .boards,
@@ -458,6 +471,27 @@ button.big {
   .side,
   .tray {
     width: 100%;
+  }
+  /* One-column phone flow: the board you act on comes first, the read-only one after. */
+  .placement > .board,
+  .boards > .side.enemy {
+    order: -1;
+  }
+  .board .grid {
+    margin: 0 auto;
+    width: fit-content;
+  }
+  .board h2 {
+    text-align: center;
+  }
+  .status {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin: 0 -0.75rem 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
   }
   .modal {
     box-sizing: border-box;

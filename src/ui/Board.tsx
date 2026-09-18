@@ -1,3 +1,4 @@
+import type { MouseEvent, PointerEvent } from 'react';
 import { isSunk, markAt, shipAt } from '../engine/board';
 import { cellLabel } from './cellLabel';
 import { BOARD_SIZE, coordKey, type Board as BoardState, type Coord } from '../engine/types';
@@ -31,6 +32,19 @@ export const Board = ({
 }: Props) => {
   const rows = Array.from({ length: BOARD_SIZE }, (_, row) => row);
   const previewKeys = new Set(preview?.cells.map(coordKey));
+  /** Touch has no hover: a finger that tapped a cell would otherwise leave the preview stuck under it. */
+  const pointerDown = (e: PointerEvent<HTMLButtonElement>) => {
+    e.currentTarget.dataset.touch = e.pointerType === 'mouse' ? '' : '1';
+  };
+  const pointerCancel = (e: PointerEvent<HTMLButtonElement>) => {
+    e.currentTarget.dataset.touch = '';
+  };
+  const click = (c: Coord, e: MouseEvent<HTMLButtonElement>) => {
+    const touch = e.currentTarget.dataset.touch === '1';
+    e.currentTarget.dataset.touch = '';
+    onCellClick?.(c);
+    if (touch) onCellHover?.(undefined);
+  };
   return (
     <section className="board">
       <h2>{title}</h2>
@@ -62,7 +76,9 @@ export const Board = ({
                 className={`cell ${state}${previewClass}`}
                 aria-label={`${cellLabel(c)}, ${state}`}
                 disabled={disabled}
-                onClick={() => onCellClick?.(c)}
+                onPointerDown={pointerDown}
+                onPointerCancel={pointerCancel}
+                onClick={(e) => click(c, e)}
                 onMouseEnter={onCellHover ? () => onCellHover(c) : undefined}
                 onFocus={onCellHover ? () => onCellHover(c) : undefined}
               >

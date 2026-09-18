@@ -494,3 +494,33 @@ React commits `revealing`, which happens when `act` returns, after the clock has
 moved. Split into two `act`s (`settleCoin()`); the new test also pins that the AI has not fired
 while the landed coin is still on screen. Lesson: a UI element that the design says is
 visible needs a test that it stays mounted, not just that its class is right.
+
+### 34. One cell of a freshly placed ship looked different on a phone (2026-09-18, PR 11, layer: UI/CSS — user found it on an iPhone)
+
+The user placed a ship on a phone and saw four filled cells and one that was "only a
+border". Reproduced in an iPhone-14 Playwright profile: the tapped cell had `:hover`
+stuck on it — touch browsers keep the last tapped element hovered — and the generic
+`button:hover:not(:disabled)` rule (specificity 0,2,1) beat `.cell.ship` (0,2,0), painting
+that one cell in the inverted button colours. Every check so far ran with a mouse or a
+keyboard, where hover moves away as soon as you do; nobody had left a finger on a cell.
+Fix: all hover rules moved under `@media (hover: hover)`; touch taps also clear the
+placement preview so an illegal-spot outline does not stay under the finger (test added);
+`touch-action: manipulation` on buttons so rapid taps on the grid do not zoom.
+
+Same pass, same device: the placement board sat ~1100 px below the fold behind the ship
+list, opponent picker and controls, and in play the enemy board you tap was a screen below
+the status line that reports the result. Phone layout now puts the board you act on first
+(placement board, enemy waters) and pins the status line to the top while scrolling; the
+title fits one line at 390 px. Lesson: "responsive" was verified at 375 px with a mouse,
+which checks that it fits, not that it is usable — a touch profile and the thumb-reach
+question ("where is the thing I tap, and can I see the result?") are separate checks.
+
+### 35. Two review findings on the mobile pass (2026-09-18, PR 11, layer: UI — Devin Review)
+
+(a) The sticky mobile status had `z-index: 2` and the game-over backdrop had none, so on a
+short viewport the status strip painted over the top of the modal. Backdrop now sits above
+everything (`z-index: 10`). (b) The touch marker on a cell was only reset by the next
+pointerdown, so a keyboard Enter on a cell that had once been tapped inherited the touch
+cleanup and wiped its focus preview. The marker is now read and cleared on every click and dropped on `pointercancel`
+(a touch that turned into a scroll never clicks); test extended. Both were consequences of the same instinct — fix the phone case in isolation without
+asking what the other input modes now do.
