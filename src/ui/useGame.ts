@@ -136,11 +136,17 @@ export const init = (seed: number): UIState => {
 
 const newSeed = (): number => Math.floor(Math.random() * 2 ** 32);
 
+/**
+ * UI-side random stream (Randomize, coin). Must not be `makeRng(seed)`: the engine
+ * draws the AI fleet from that stream, so the first Randomize would clone the enemy layout.
+ */
+export const uiRng = (seed: number): RNG => makeRng((seed ^ 0x9e3779b9) >>> 0);
+
 export const useGame = (initialSeed?: number) => {
   const [ui, dispatch] = useReducer(reducer, undefined, () => init(initialSeed ?? newSeed()));
   const rng = useRef<RNG | null>(null);
-  if (rng.current === null) rng.current = makeRng(ui.game.seed);
-  const draw = (): RNG => rng.current ?? (rng.current = makeRng(ui.game.seed));
+  if (rng.current === null) rng.current = uiRng(ui.game.seed);
+  const draw = (): RNG => rng.current ?? (rng.current = uiRng(ui.game.seed));
 
   const { game, flipping } = ui;
 
@@ -153,7 +159,7 @@ export const useGame = (initialSeed?: number) => {
   useEffect(() => {
     if (flipping || game.phase !== 'playing' || game.turn !== 'ai') return;
     const timer = setTimeout(() => {
-      const at = chooseShot(toAIView(game), rng.current ?? makeRng(game.seed));
+      const at = chooseShot(toAIView(game), rng.current ?? uiRng(game.seed));
       dispatch({ type: 'fire', shooter: 'ai', at });
     }, AI_DELAY_MS);
     return () => clearTimeout(timer);
@@ -176,7 +182,7 @@ export const useGame = (initialSeed?: number) => {
     fireAt: (at: Coord) => dispatch({ type: 'fire', shooter: 'human', at }),
     reset: () => {
       const seed = newSeed();
-      rng.current = makeRng(seed);
+      rng.current = uiRng(seed);
       dispatch({ type: 'reset', seed });
     },
   };

@@ -4,7 +4,9 @@ import { App } from '../src/App';
 import { randomFleet } from '../src/engine/fleet';
 import { confirmFleet, flipCoin, setHumanFleet, startGame } from '../src/engine/game';
 import { makeRng } from '../src/engine/rng';
-import { AI_DELAY_MS, COIN_FLIP_MS } from '../src/ui/useGame';
+import { shipCells as engineShipCells } from '../src/engine/board';
+import { cellLabel } from '../src/ui/cellLabel';
+import { AI_DELAY_MS, COIN_FLIP_MS, uiRng } from '../src/ui/useGame';
 import { ErrorBoundary } from '../src/ui/ErrorBoundary';
 
 const grid = (name: string) => screen.getByRole('grid', { name });
@@ -16,7 +18,7 @@ const marks = (g: HTMLElement) => g.querySelectorAll('.cell.miss, .cell.hit, .ce
 /** Seed whose "Randomize → Continue → Flip" path lands on the requested side (same RNG stream as the app). */
 const seedFor = (coin: 'heads' | 'tails'): number => {
   for (let seed = 1; seed < 1000; seed++) {
-    const rng = makeRng(seed);
+    const rng = uiRng(seed);
     randomFleet(rng);
     const game = flipCoin(
       confirmFleet(setHumanFleet(startGame(seed), randomFleet(makeRng(0)))),
@@ -115,6 +117,27 @@ describe('placement', () => {
       seen.add(shipKeys(own));
     }
     expect(seen.size).toBeGreaterThan(1);
+  });
+
+  it('the first Randomize never hands the player a copy of the enemy fleet', () => {
+    for (const seed of [1, 2, 3, 42, 4242]) {
+      const { unmount } = render(<App seed={seed} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Randomize fleet' }));
+      const human = shipKeys(grid('Your fleet'));
+      const enemy = randomFleet(makeRng(seed)); // what startGame(seed) gives the AI
+      const enemyKeys = enemy
+        .flatMap((s) => engineShipCells(s))
+        .map((c) => cellLabel(c))
+        .sort()
+        .join('|');
+      const humanKeys = human
+        .split('|')
+        .map((l) => l.replace(', ship', ''))
+        .sort()
+        .join('|');
+      expect(humanKeys).not.toBe(enemyKeys);
+      unmount();
+    }
   });
 });
 
