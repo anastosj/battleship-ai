@@ -101,7 +101,7 @@ export const reducer = (ui: UIState, action: Action): UIState => {
     case 'confirm':
       return withGame(ui, confirmFleet(ui.game));
     case 'difficulty':
-      return withGame(ui, setDifficulty(ui.game, action.difficulty));
+      return { ...ui, game: setDifficulty(ui.game, action.difficulty) };
     case 'flip': {
       const game = flipCoin(ui.game, () => action.roll);
       return game === ui.game ? ui : { ...ui, game, flipping: true };

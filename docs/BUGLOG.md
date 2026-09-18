@@ -341,3 +341,16 @@ built around one AI's strength encodes that strength as an assumption; the first
 Also logged as a deliberate spec deviation: spec v0.2 says "no difficulty selector"; the owner
 asked for Easy/Hard after release. The lock is enforced in the engine (`setDifficulty` is a no-op
 outside placement), not just by hiding the radio buttons.
+
+### 23. Changing difficulty reset the selected ship (2026-09-18, PR 5, layer: UI state — caught by Devin Review)
+
+Symptom: pick a ship in the tray, then switch Easy/Hard: the tray jumps back to the next unplaced
+ship, so the next board click places the wrong ship (or nothing, with a complete fleet).
+
+Cause: the `difficulty` reducer case reused `withGame`, whose job is to recompute `selected` after
+the _fleet_ changes. Difficulty does not touch the fleet, so the recompute was a side effect.
+
+Fix: spread `game` directly and leave `selected` alone; RTL regression test (select Destroyer →
+switch → place → 2 cells). Lesson: a "convenient" helper couples two unrelated pieces of state;
+a reviewer reading the reducer top-to-bottom saw it, my tests only ever switched difficulty before
+touching the tray.

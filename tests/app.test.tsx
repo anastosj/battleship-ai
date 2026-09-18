@@ -160,6 +160,18 @@ describe('difficulty', () => {
     expect(screen.getByText('Easy', { selector: '.badge' })).toBeInTheDocument();
   });
 
+  it('switching difficulty does not disturb the ship being placed', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: /^Destroyer/ }));
+    fireEvent.click(screen.getByRole('radio', { name: /Easy/ }));
+    expect(screen.getByRole('button', { name: /^Destroyer/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    fireEvent.click(within(grid('Your fleet')).getByRole('button', { name: 'A1, water' }));
+    expect(shipCells(grid('Your fleet'))).toBe(2);
+  });
+
   it('the chosen difficulty survives Play again / New game', () => {
     render(<App seed={seedFor('tails')} />);
     fireEvent.click(screen.getByRole('radio', { name: /Easy/ }));
