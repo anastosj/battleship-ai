@@ -69,12 +69,15 @@ export const isMatchRecord = (v: unknown): v is MatchRecord =>
   isSide(v.you) &&
   isSide(v.enemy);
 
-/** Anything unreadable (missing key, corrupt JSON, foreign shape) yields an empty history. */
+/**
+ * Anything unreadable (missing key, corrupt JSON, foreign shape) yields an empty history.
+ * Capped at `MAX_MATCHES` so an oversized stored list is bounded on read as well as write.
+ */
 export const parseMatches = (raw: string | null): readonly MatchRecord[] => {
   if (raw === null) return [];
   try {
     const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter(isMatchRecord) : [];
+    return Array.isArray(parsed) ? parsed.filter(isMatchRecord).slice(0, MAX_MATCHES) : [];
   } catch {
     return [];
   }

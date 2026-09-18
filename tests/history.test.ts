@@ -88,6 +88,14 @@ describe('match records', () => {
     expect(parseMatches(mixed).map((m) => m.seed)).toEqual([1]);
   });
 
+  it('parseMatches caps an oversized stored list at MAX_MATCHES, keeping the newest first', () => {
+    const oversized = Array.from({ length: MAX_MATCHES * 3 }, (_, i) => sample(i + 1));
+    const parsed = parseMatches(JSON.stringify(oversized));
+    expect(parsed).toHaveLength(MAX_MATCHES);
+    expect(parsed[0]?.seed).toBe(1);
+    expect(parsed[MAX_MATCHES - 1]?.seed).toBe(MAX_MATCHES);
+  });
+
   it('save/load round-trips and an empty list removes the key', () => {
     const storage = memoryStorage();
     const list = [sample(2, 'ai'), sample(1)];
