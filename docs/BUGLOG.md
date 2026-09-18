@@ -316,3 +316,13 @@ Fix: a small table — Shots, Hits (out of 17 fleet cells), Accuracy — for bot
 two new pure helpers `hitCount` and `fleetCellCount` in `engine/board.ts`. Test now checks the
 winner's row reads `17 / 17`. Lesson: PR 3's modal test asserted on the presence of numbers, not
 on whether they meant anything.
+
+### 21. `favicon.ico` 404 on every page load (2026-09-18, seen in the PR 4 live test, layer: build/deploy)
+
+Symptom: the browser console showed a 404 for `/favicon.ico` on the live site. `index.html` never
+linked an icon, so browsers fell back to the default path; the Vite template's `favicon.svg` was
+sitting unused in `public/`.
+
+Fix: `<link rel="icon" href="/battleship-ai/favicon.svg">` (base-prefixed for Pages) and a
+ship-shaped icon in place of the template logo. Cosmetic, but a red line in the console is noise
+that hides real errors during testing.
