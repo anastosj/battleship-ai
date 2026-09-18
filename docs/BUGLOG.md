@@ -354,3 +354,13 @@ Fix: spread `game` directly and leave `selected` alone; RTL regression test (sel
 switch → place → 2 cells). Lesson: a "convenient" helper couples two unrelated pieces of state;
 a reviewer reading the reducer top-to-bottom saw it, my tests only ever switched difficulty before
 touching the tray.
+
+### 24. Difficulty hints pushed the placement board under the tray on desktop (2026-09-18, PR 5 follow-up, layer: CSS — caught by browser test)
+
+Symptom: after PR 5 the placement screen stacked the board below the ship tray even at 1600 px.
+The tray had no width; the new one-line hint text ("Parity hunt, line targeting, remembers
+touching ships.") made it as wide as the sentence, and `.placement`'s `flex-wrap` did the rest.
+
+Fix: `.tray { flex: 0 1 20rem }` so the hints wrap inside a fixed column. Verified 1400 px
+(side-by-side) and 375 px (stacked). Lesson: RTL tests cannot see layout; every PR that adds text to
+a flex row needs the desktop screenshot, not only the phone one.
