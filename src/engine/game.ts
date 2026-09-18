@@ -17,11 +17,16 @@ import {
 const boardWith = (ships: readonly Ship[]): Board =>
   ships.reduce((b, s) => placeShip(b, s), emptyBoard());
 
-export const newGame = (seed: number): GameState => ({
+export type Fleets = { human: readonly Ship[]; ai: readonly Ship[] };
+
+export const newGame = (
+  seed: number,
+  fleets: Fleets = { human: FIXED_HUMAN_FLEET, ai: FIXED_AI_FLEET },
+): GameState => ({
   phase: 'playing',
   turn: 'human',
-  human: boardWith(FIXED_HUMAN_FLEET),
-  ai: boardWith(FIXED_AI_FLEET),
+  human: boardWith(fleets.human),
+  ai: boardWith(fleets.ai),
   aiShots: [],
   seed,
 });
