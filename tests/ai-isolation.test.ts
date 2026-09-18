@@ -8,7 +8,15 @@ import { makeRng } from '../src/engine/rng';
 import { type Coord, type GameState, type Ship } from '../src/engine/types';
 
 const AI_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'ai');
-const ALLOWED_FROM_TYPES = new Set(['AIView', 'AIShot', 'Coord', 'ShipKind', 'SHIP_SIZES', 'RNG']);
+const ALLOWED_FROM_TYPES = new Set([
+  'AIView',
+  'AIShot',
+  'Coord',
+  'ShipKind',
+  'SHIP_SIZES',
+  'RNG',
+  'Difficulty',
+]);
 const ALLOWED_MODULES = new Set(['../engine/types', '../engine/rng']);
 
 const importsOf = (src: string): { names: string[]; from: string }[] =>

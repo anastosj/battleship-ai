@@ -49,11 +49,16 @@ export type Phase = 'placement' | 'coinflip' | 'playing' | 'gameover';
 
 export type Coin = 'heads' | 'tails';
 
+export type Difficulty = 'easy' | 'hard';
+export const DIFFICULTIES: readonly Difficulty[] = ['easy', 'hard'];
+
 export type GameState = {
   phase: Phase;
   /** Meaningful only once `phase === 'playing'`; before the coin flip it is a placeholder. */
   turn: Player;
   coin?: Coin;
+  /** Locked once the fleet is confirmed (see `setDifficulty`). */
+  difficulty: Difficulty;
   human: Board;
   ai: Board;
   /** Log of the AI's own shots and their results; the sole source of AIView. */

@@ -11,6 +11,7 @@ import {
   type Board,
   type Coin,
   type Coord,
+  type Difficulty,
   type GameState,
   type Player,
   type RNG,
@@ -24,9 +25,10 @@ const boardWith = (ships: readonly Ship[]): Board =>
 export type Fleets = { human: readonly Ship[]; ai: readonly Ship[] };
 
 /** Fresh game in the placement phase: empty human board, AI fleet drawn from the seed. */
-export const startGame = (seed: number): GameState => ({
+export const startGame = (seed: number, difficulty: Difficulty = 'hard'): GameState => ({
   phase: 'placement',
   turn: 'human',
+  difficulty,
   human: emptyBoard(),
   ai: boardWith(randomFleet(makeRng(seed))),
   aiShots: [],
@@ -51,6 +53,10 @@ export const setHumanFleet = (state: GameState, ships: readonly Ship[]): GameSta
 export const fleetComplete = (board: Board): boolean =>
   SHIP_KINDS.every((k) => board.ships.some((s) => s.kind === k));
 
+/** The opponent can only be changed while placing ships; afterwards it is a no-op. */
+export const setDifficulty = (state: GameState, difficulty: Difficulty): GameState =>
+  state.phase === 'placement' && state.difficulty !== difficulty ? { ...state, difficulty } : state;
+
 /** placement → coinflip; a no-op unless all five ships are down. */
 export const confirmFleet = (state: GameState): GameState =>
   state.phase === 'placement' && fleetComplete(state.human)
@@ -71,6 +77,7 @@ export const newGame = (
 ): GameState => ({
   phase: 'playing',
   turn: 'human',
+  difficulty: 'hard',
   human: boardWith(fleets.human),
   ai: boardWith(fleets.ai),
   aiShots: [],

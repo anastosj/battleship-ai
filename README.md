@@ -25,9 +25,15 @@ alone), and a React error boundary turns a crash into a message with a reload bu
 
 ## The AI
 
-One Hunt/Target opponent, no difficulty levels. It sees only its own shots and their results
-(`AIView`) — never the board — and a test enforces that `src/ai/**` cannot import the board types.
-Hunt: checkerboard parity filtered by whether the smallest surviving ship still fits. Target:
+Two opponents, chosen on the placement screen and locked once you continue to the coin flip.
+Both see only their own shots and their results (`AIView`) — never the board — and a test
+enforces that `src/ai/**` cannot import the board types.
+
+**Easy** (`src/ai/easy.ts`) hunts uniformly at random and, after a hit, fires at the open
+neighbours of its latest hit. When anything sinks it forgets every outstanding hit — the naive
+behaviour BUGLOG #1 warns about — so it averages ≈70 shots to clear a board.
+
+**Hard** (`src/ai/huntTarget.ts`, the default, ≈50 shots) is the full Hunt/Target AI. Hunt: checkerboard parity filtered by whether the smallest surviving ship still fits. Target:
 extend lines through unresolved hits; when a ship sinks, infer which hits belonged to it from the
 reported length so a touching ship is not abandoned (see `docs/BUGLOG.md` #1, #8). A self-play test
 checks the average shots-to-win over random fleets stays within 46–65.
