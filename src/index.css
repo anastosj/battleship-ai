@@ -266,6 +266,7 @@ button.big {
     width: 100%;
   }
   .modal {
+    box-sizing: border-box;
     min-width: 0;
     width: calc(100vw - 2rem);
     padding: 1.25rem;

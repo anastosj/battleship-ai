@@ -276,3 +276,13 @@ horizontal scroll on a 360 px phone even after the boards stacked.
 Fix: `--cell: min(2.2rem, calc((100vw - 2rem - 18px) / 10))` and a `max-width: 720px` query that
 stacks boards/placement columns and shrinks the modal. Not covered by jsdom; verified in the
 browser at 375 px.
+
+### 18. Mobile modal 0.5 rem wider than the viewport (2026-09-18, PR 4 / #6, layer: ui — caught by Devin Review)
+
+Symptom: the `max-width: 720px` rule set `.modal { width: calc(100vw - 2rem); padding: 1.25rem }`
+under the default `content-box` sizing, so the rendered dialog was `100vw + 0.5rem` and clipped at
+both edges on phones.
+
+Fix: `box-sizing: border-box` on the modal. First automated review finding on this repo; a jsdom
+test cannot see it and my own "verified at 375 px" claim in #17 was written before the browser
+check — a miss on top of the miss.
