@@ -6,7 +6,7 @@ This is the short version. The full running log, kept from the first session and
 every PR (misses and corrections included), is [`BUGLOG.md`](./BUGLOG.md); numbers below refer to
 its entries. The game was built by Devin in four thin vertical slices (PR 1 skeleton → PR 2 AI →
 PR 3 placement/coin flip → PR 4 polish), each one deployed and played in a real browser before the
-next began. Nineteen entries were logged; the ones worth reading are the ones the type system and
+next began. Twenty entries were logged; the ones worth reading are the ones the type system and
 the fuzzer did not catch.
 
 ## How bugs were found
@@ -18,6 +18,7 @@ the fuzzer did not catch.
 | Unit tests written first                          | 4, 12, 13         | State-machine ordering (coin reveal vs. AI timer)              |
 | Fuzzing with a ground-truth oracle (5,000 fleets) | 8, 9              | One-in-thousands AI logic errors; a wrong number in the spec   |
 | Actually playing the deployed build (recorded)    | **6, 15, 17, 19** | Everything the UI/state layer got wrong; jsdom sees none of it |
+| Owner playing the released game                   | 20                | Data that was technically correct but useless to a player      |
 | Automated code review (Devin Review)              | 18                | CSS box-model math a human eye skipped                         |
 
 ## The five that matter
@@ -102,6 +103,10 @@ hook gained a `flipping` flag that gates the AI timer (and disables the boards, 
   created by a different tool than the code PRs. The rule is every PR, including generated ones.
 - **First deploy failed** (#7): GitHub Pages was not enabled and the deploy job is skipped on PRs,
   so the failure was invisible until merge and needed a human to flip a repo setting.
+
+- **Game-over stats meant nothing** (#20). "Your shots: 54 · Enemy shots: 54" is correct and
+  useless; the owner asked for hits. The modal now shows Shots, Hits (of 17) and Accuracy per side.
+  PR 3's test only asserted that numbers were present.
 
 ## What the AI is allowed to see
 
