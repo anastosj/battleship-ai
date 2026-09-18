@@ -521,6 +521,6 @@ question ("where is the thing I tap, and can I see the result?") are separate ch
 short viewport the status strip painted over the top of the modal. Backdrop now sits above
 everything (`z-index: 10`). (b) The touch marker on a cell was only reset by the next
 pointerdown, so a keyboard Enter on a cell that had once been tapped inherited the touch
-cleanup and wiped its focus preview. The marker is now read and cleared on every click; test
-extended. Both were consequences of the same instinct — fix the phone case in isolation without
+cleanup and wiped its focus preview. The marker is now read and cleared on every click and dropped on `pointercancel`
+(a touch that turned into a scroll never clicks); test extended. Both were consequences of the same instinct — fix the phone case in isolation without
 asking what the other input modes now do.

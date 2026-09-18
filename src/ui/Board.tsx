@@ -36,6 +36,9 @@ export const Board = ({
   const pointerDown = (e: PointerEvent<HTMLButtonElement>) => {
     e.currentTarget.dataset.touch = e.pointerType === 'mouse' ? '' : '1';
   };
+  const pointerCancel = (e: PointerEvent<HTMLButtonElement>) => {
+    e.currentTarget.dataset.touch = '';
+  };
   const click = (c: Coord, e: MouseEvent<HTMLButtonElement>) => {
     const touch = e.currentTarget.dataset.touch === '1';
     e.currentTarget.dataset.touch = '';
@@ -74,6 +77,7 @@ export const Board = ({
                 aria-label={`${cellLabel(c)}, ${state}`}
                 disabled={disabled}
                 onPointerDown={pointerDown}
+                onPointerCancel={pointerCancel}
                 onClick={(e) => click(c, e)}
                 onMouseEnter={onCellHover ? () => onCellHover(c) : undefined}
                 onFocus={onCellHover ? () => onCellHover(c) : undefined}
