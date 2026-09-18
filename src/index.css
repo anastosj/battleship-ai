@@ -194,6 +194,16 @@ button.primary:disabled {
   border-color: var(--ink-faint);
   box-shadow: none;
 }
+button.primary.attention:not(:disabled) {
+  animation: pulse 1s steps(1) infinite;
+}
+@keyframes pulse {
+  50% {
+    background: var(--amber);
+    border-color: var(--amber);
+    box-shadow: 0 0 10px rgba(255, 179, 71, 0.7);
+  }
+}
 button.big {
   font-size: 1.4rem;
   padding: 0.6rem 1.5rem;
@@ -351,6 +361,11 @@ button.big {
   }
   .turn::after {
     animation: none;
+  }
+  button.primary.attention:not(:disabled) {
+    animation: none;
+    background: var(--amber);
+    border-color: var(--amber);
   }
 }
 .side {

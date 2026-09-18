@@ -48,7 +48,9 @@ describe('placement', () => {
   it('starts in placement with an empty board and Continue disabled', () => {
     render(<App />);
     expect(shipCells(grid('Your fleet'))).toBe(0);
-    expect(screen.getByRole('button', { name: 'Continue to coin flip' })).toBeDisabled();
+    const cont = screen.getByRole('button', { name: 'Continue to coin flip' });
+    expect(cont).toBeDisabled();
+    expect(cont).not.toHaveClass('attention');
     expect(screen.queryByRole('grid', { name: 'Enemy waters' })).toBeNull();
   });
 
@@ -109,7 +111,9 @@ describe('placement', () => {
     const randomize = screen.getByRole('button', { name: 'Randomize fleet' });
     fireEvent.click(randomize);
     expect(shipCells(own)).toBe(17);
-    expect(screen.getByRole('button', { name: 'Continue to coin flip' })).toBeEnabled();
+    const cont = screen.getByRole('button', { name: 'Continue to coin flip' });
+    expect(cont).toBeEnabled();
+    expect(cont).toHaveClass('attention');
     const seen = new Set<string>([shipKeys(own)]);
     for (let i = 0; i < 5; i++) {
       fireEvent.click(randomize);
