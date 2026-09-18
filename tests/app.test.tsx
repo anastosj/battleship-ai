@@ -141,6 +141,65 @@ describe('placement', () => {
   });
 });
 
+describe('difficulty', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('defaults to Hard, can be switched during placement, and disappears once the fleet is confirmed', () => {
+    render(<App seed={seedFor('tails')} />);
+    const easy = screen.getByRole('radio', { name: /Easy/ });
+    const hard = screen.getByRole('radio', { name: /Hard/ });
+    expect(hard).toBeChecked();
+    fireEvent.click(easy);
+    expect(easy).toBeChecked();
+    expect(screen.queryByText('Easy', { selector: '.badge' })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Randomize fleet' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to coin flip' }));
+    expect(screen.queryByRole('radio')).toBeNull();
+    expect(screen.getByText('Easy', { selector: '.badge' })).toBeInTheDocument();
+  });
+
+  it('the chosen difficulty survives Play again / New game', () => {
+    render(<App seed={seedFor('tails')} />);
+    fireEvent.click(screen.getByRole('radio', { name: /Easy/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Randomize fleet' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to coin flip' }));
+    fireEvent.click(screen.getByRole('button', { name: 'New game' }));
+    expect(screen.getByRole('radio', { name: /Easy/ })).toBeChecked();
+  });
+
+  it('an Easy opponent does not hunt on a single parity', () => {
+    render(<App seed={seedFor('tails')} />);
+    fireEvent.click(screen.getByRole('radio', { name: /Easy/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Randomize fleet' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to coin flip' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Flip coin' }));
+    act(() => {
+      vi.advanceTimersByTime(COIN_FLIP_MS + 10);
+    });
+    // Alternate: AI fires, then we fire a cell we have not fired at yet.
+    const parities = new Set<number>();
+    for (let i = 0; i < 12; i++) {
+      act(() => {
+        vi.advanceTimersByTime(AI_DELAY_MS + 10);
+      });
+      const own = grid('Your fleet');
+      own.querySelectorAll('.cell.miss, .cell.hit, .cell.sunk').forEach((cell) => {
+        const label = cell.getAttribute('aria-label') ?? '';
+        const m = /^([A-J])(\d+)/.exec(label);
+        if (m) parities.add((m[1]!.charCodeAt(0) + Number(m[2])) % 2);
+      });
+      if (screen.queryByRole('dialog')) break;
+      const target = within(grid('Enemy waters'))
+        .getAllByRole('button')
+        .find((b) => !b.hasAttribute('disabled'));
+      if (target) fireEvent.click(target);
+    }
+    expect(parities.size).toBe(2);
+  });
+});
+
 describe('coin flip', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());

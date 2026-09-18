@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useRef } from 'react';
-import { chooseShot } from '../ai/huntTarget';
+import { chooseShotFor } from '../ai';
 import { randomFleet } from '../engine/fleet';
 import {
   confirmFleet,
@@ -7,6 +7,7 @@ import {
   flipCoin,
   placeHumanShip,
   removeHumanShip,
+  setDifficulty,
   setHumanFleet,
   startGame,
   toAIView,
@@ -16,6 +17,7 @@ import {
   SHIP_KINDS,
   SHIP_NAMES,
   type Coord,
+  type Difficulty,
   type GameState,
   type Orientation,
   type Player,
@@ -47,10 +49,11 @@ type Action =
   | { type: 'pickup'; kind: ShipKind }
   | { type: 'setFleet'; ships: readonly Ship[] }
   | { type: 'confirm' }
+  | { type: 'difficulty'; difficulty: Difficulty }
   | { type: 'flip'; roll: number }
   | { type: 'flipDone' }
   | { type: 'fire'; shooter: Player; at: Coord }
-  | { type: 'reset'; seed: number };
+  | { type: 'reset'; seed: number; difficulty: Difficulty };
 
 const describe = (shooter: Player, result: ShotResult): string | undefined => {
   const you = shooter === 'human';
@@ -77,7 +80,7 @@ const withGame = (ui: UIState, game: GameState): UIState =>
 export const reducer = (ui: UIState, action: Action): UIState => {
   switch (action.type) {
     case 'reset':
-      return init(action.seed);
+      return init(action.seed, action.difficulty);
     case 'select':
       return ui.game.phase === 'placement' ? { ...ui, selected: action.kind } : ui;
     case 'rotate':
@@ -97,6 +100,8 @@ export const reducer = (ui: UIState, action: Action): UIState => {
       return withGame(ui, setHumanFleet(ui.game, action.ships));
     case 'confirm':
       return withGame(ui, confirmFleet(ui.game));
+    case 'difficulty':
+      return withGame(ui, setDifficulty(ui.game, action.difficulty));
     case 'flip': {
       const game = flipCoin(ui.game, () => action.roll);
       return game === ui.game ? ui : { ...ui, game, flipping: true };
@@ -122,8 +127,8 @@ export const reducer = (ui: UIState, action: Action): UIState => {
   }
 };
 
-export const init = (seed: number): UIState => {
-  const game = startGame(seed);
+export const init = (seed: number, difficulty: Difficulty = 'hard'): UIState => {
+  const game = startGame(seed, difficulty);
   return {
     game,
     lastHuman: '',
@@ -159,7 +164,7 @@ export const useGame = (initialSeed?: number) => {
   useEffect(() => {
     if (flipping || game.phase !== 'playing' || game.turn !== 'ai') return;
     const timer = setTimeout(() => {
-      const at = chooseShot(toAIView(game), rng.current ?? uiRng(game.seed));
+      const at = chooseShotFor(game.difficulty, toAIView(game), rng.current ?? uiRng(game.seed));
       dispatch({ type: 'fire', shooter: 'ai', at });
     }, AI_DELAY_MS);
     return () => clearTimeout(timer);
@@ -178,12 +183,13 @@ export const useGame = (initialSeed?: number) => {
     pickup: (kind: ShipKind) => dispatch({ type: 'pickup', kind }),
     randomize: () => dispatch({ type: 'setFleet', ships: randomFleet(draw()) }),
     confirm: () => dispatch({ type: 'confirm' }),
+    setDifficulty: (difficulty: Difficulty) => dispatch({ type: 'difficulty', difficulty }),
     flip: () => dispatch({ type: 'flip', roll: draw()() }),
     fireAt: (at: Coord) => dispatch({ type: 'fire', shooter: 'human', at }),
     reset: () => {
       const seed = newSeed();
       rng.current = uiRng(seed);
-      dispatch({ type: 'reset', seed });
+      dispatch({ type: 'reset', seed, difficulty: game.difficulty });
     },
   };
 };

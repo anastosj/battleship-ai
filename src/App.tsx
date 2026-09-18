@@ -1,3 +1,4 @@
+import { DIFFICULTY_NAMES } from './ai';
 import { Board } from './ui/Board';
 import { CoinFlip } from './ui/CoinFlip';
 import { FleetPanel } from './ui/FleetPanel';
@@ -16,9 +17,14 @@ export const App = ({ seed }: { seed?: number } = {}) => {
       <header>
         <h1>Battleship vs. AI</h1>
         {game.phase !== 'placement' && (
-          <button type="button" onClick={g.reset}>
-            New game
-          </button>
+          <div className="header-right">
+            <span className="badge" aria-label={`Opponent: ${DIFFICULTY_NAMES[game.difficulty]}`}>
+              {DIFFICULTY_NAMES[game.difficulty]}
+            </span>
+            <button type="button" onClick={g.reset}>
+              New game
+            </button>
+          </div>
         )}
       </header>
 
@@ -33,6 +39,7 @@ export const App = ({ seed }: { seed?: number } = {}) => {
           pickup={g.pickup}
           randomize={g.randomize}
           confirm={g.confirm}
+          setDifficulty={g.setDifficulty}
         />
       )}
 

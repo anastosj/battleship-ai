@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { canPlace, removeShip, shipAt, shipCells } from '../engine/board';
 import { fleetComplete } from '../engine/game';
+import { DIFFICULTY_NAMES } from '../ai';
 import {
+  DIFFICULTIES,
   SHIP_KINDS,
   SHIP_NAMES,
   SHIP_SIZES,
   type Coord,
+  type Difficulty,
   type GameState,
   type Orientation,
   type Ship,
@@ -23,6 +26,12 @@ type Props = {
   pickup: (kind: ShipKind) => void;
   randomize: () => void;
   confirm: () => void;
+  setDifficulty: (difficulty: Difficulty) => void;
+};
+
+const DIFFICULTY_HINTS: Record<Difficulty, string> = {
+  easy: 'Fires at random, then pokes around a hit.',
+  hard: 'Parity hunt, line targeting, remembers touching ships.',
 };
 
 export const PlacementScreen = ({
@@ -35,6 +44,7 @@ export const PlacementScreen = ({
   pickup,
   randomize,
   confirm,
+  setDifficulty,
 }: Props) => {
   const [hover, setHover] = useState<Coord | undefined>();
 
@@ -92,6 +102,23 @@ export const PlacementScreen = ({
             );
           })}
         </ul>
+        <fieldset className="difficulty">
+          <legend>Opponent</legend>
+          {DIFFICULTIES.map((d) => (
+            <label key={d}>
+              <input
+                type="radio"
+                name="difficulty"
+                value={d}
+                checked={game.difficulty === d}
+                onChange={() => setDifficulty(d)}
+              />
+              <span>
+                <strong>{DIFFICULTY_NAMES[d]}</strong> — {DIFFICULTY_HINTS[d]}
+              </span>
+            </label>
+          ))}
+        </fieldset>
         <div className="controls">
           <button type="button" onClick={rotate} aria-describedby="orientation">
             Rotate (R)

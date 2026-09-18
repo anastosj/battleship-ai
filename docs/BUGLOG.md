@@ -326,3 +326,18 @@ sitting unused in `public/`.
 Fix: `<link rel="icon" href="/battleship-ai/favicon.svg">` (base-prefixed for Pages) and a
 ship-shaped icon in place of the template logo. Cosmetic, but a red line in the console is noise
 that hides real errors during testing.
+
+### 22. Test harness assumed the AI always wins inside 100 shots (2026-09-18, PR 5 difficulty, layer: tests — first attempt wrong)
+
+Symptom: the new Easy-vs-Hard shot-count test threw `human won before the AI (seed 18)`. The
+shared `playAI` helper has the "human" fire at water first and ships last, so it wins on its own
+100th shot — an invisible ceiling that was fine for Hard (worst case ≈95) but not for an AI that
+hunts at random and can need the whole board.
+
+Fix: the Easy tests measure shots-to-sink with a small standalone simulator driven only by
+`AIView`, and `playAI` takes an optional chooser for the one turn-legality check. Lesson: a helper
+built around one AI's strength encodes that strength as an assumption; the first weaker AI found it.
+
+Also logged as a deliberate spec deviation: spec v0.2 says "no difficulty selector"; the owner
+asked for Easy/Hard after release. The lock is enforced in the engine (`setDifficulty` is a no-op
+outside placement), not just by hiding the radio buttons.

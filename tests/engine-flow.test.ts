@@ -8,6 +8,7 @@ import {
   flipCoin,
   placeHumanShip,
   removeHumanShip,
+  setDifficulty,
   setHumanFleet,
   startGame,
 } from '../src/engine/game';
@@ -32,6 +33,23 @@ describe('placement phase', () => {
     expect(fleetComplete(s.ai)).toBe(true);
     expect(s.ai.ships.flatMap(shipCells)).toHaveLength(17);
     expect(startGame(42)).toEqual(s);
+  });
+
+  it('difficulty defaults to hard, can change during placement, and is locked afterwards', () => {
+    const s0 = deepFreeze(startGame(3));
+    expect(s0.difficulty).toBe('hard');
+    expect(startGame(3, 'easy').difficulty).toBe('easy');
+    const easy = setDifficulty(s0, 'easy');
+    expect(easy.difficulty).toBe('easy');
+    expect(s0.difficulty).toBe('hard');
+    expect(setDifficulty(easy, 'easy')).toBe(easy);
+
+    const confirmed = confirmFleet(setHumanFleet(easy, randomFleet(makeRng(9))));
+    expect(confirmed.phase).toBe('coinflip');
+    expect(setDifficulty(confirmed, 'hard')).toBe(confirmed);
+    const playing = flipCoin(confirmed, () => 0);
+    expect(setDifficulty(playing, 'hard')).toBe(playing);
+    expect(playing.difficulty).toBe('easy');
   });
 
   it('placeHumanShip adds a legal ship, rejects illegal ones, and moves an existing ship', () => {
