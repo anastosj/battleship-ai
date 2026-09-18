@@ -137,7 +137,7 @@ export const PlacementScreen = ({
           </button>
           <button
             type="button"
-            className="primary"
+            className={`primary${fleetComplete(board) ? ' attention' : ''}`}
             disabled={!fleetComplete(board)}
             onClick={confirm}
           >

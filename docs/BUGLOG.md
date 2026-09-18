@@ -464,3 +464,14 @@ preview they found the overlay made the boards less clear and asked for it to go
 `body::before` overlay; the phosphor palette, glow and VT323 carry the theme on their own.
 Lesson: a decorative choice approved from a description is not approved until it has been
 played with — ship the preview before asking for the yes.
+
+### 32. Nothing told the player the fleet was done (2026-09-18, PR 9, layer: UI — user feedback on the live build)
+
+After the fifth ship lands, the only change on screen was "Continue to coin flip" going from
+dim to lit and a hint sentence updating — easy to miss on a monochrome console. The user
+asked for the button to blink green/amber until pressed. Added an `attention` class that
+`PlacementScreen` applies whenever `fleetComplete(board)`; CSS pulses it with `steps(1)` so
+it reads as a console indicator, and reduced-motion users get a static amber button instead.
+Tested: the class is absent with an empty board and present after Randomize. Lesson: a
+disabled → enabled transition is not a call to action; it took a person playing the game to
+say so.
