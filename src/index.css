@@ -420,6 +420,7 @@ button.big {
 .modal-backdrop {
   position: fixed;
   inset: 0;
+  z-index: 10;
   background: rgba(3, 10, 6, 0.8);
   display: grid;
   place-items: center;

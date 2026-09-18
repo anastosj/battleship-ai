@@ -37,8 +37,10 @@ export const Board = ({
     e.currentTarget.dataset.touch = e.pointerType === 'mouse' ? '' : '1';
   };
   const click = (c: Coord, e: MouseEvent<HTMLButtonElement>) => {
+    const touch = e.currentTarget.dataset.touch === '1';
+    e.currentTarget.dataset.touch = '';
     onCellClick?.(c);
-    if (e.currentTarget.dataset.touch) onCellHover?.(undefined);
+    if (touch) onCellHover?.(undefined);
   };
   return (
     <section className="board">

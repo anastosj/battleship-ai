@@ -514,3 +514,13 @@ the status line that reports the result. Phone layout now puts the board you act
 title fits one line at 390 px. Lesson: "responsive" was verified at 375 px with a mouse,
 which checks that it fits, not that it is usable — a touch profile and the thumb-reach
 question ("where is the thing I tap, and can I see the result?") are separate checks.
+
+### 35. Two review findings on the mobile pass (2026-09-18, PR 11, layer: UI — Devin Review)
+
+(a) The sticky mobile status had `z-index: 2` and the game-over backdrop had none, so on a
+short viewport the status strip painted over the top of the modal. Backdrop now sits above
+everything (`z-index: 10`). (b) The touch marker on a cell was only reset by the next
+pointerdown, so a keyboard Enter on a cell that had once been tapped inherited the touch
+cleanup and wiped its focus preview. The marker is now read and cleared on every click; test
+extended. Both were consequences of the same instinct — fix the phone case in isolation without
+asking what the other input modes now do.

@@ -111,6 +111,11 @@ describe('placement', () => {
     fireEvent.pointerDown(j1, { pointerType: 'touch' });
     fireEvent.click(j1);
     expect(own.querySelectorAll('.preview-ok, .preview-bad').length).toBe(0);
+
+    // A later keyboard activation (no pointerdown) must not inherit the touch cleanup.
+    fireEvent.focus(j1);
+    fireEvent.click(j1);
+    expect(j1.className).toContain('preview-bad');
   });
 
   it('picks a placed ship back up when clicked', () => {
