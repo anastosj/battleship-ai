@@ -536,3 +536,16 @@ report, one for the turn cue on its own line); measured constant 99 px across ei
 clip the cue for players with 200 % text size (F7); the box scrolls instead.
 Lesson: anything `position: sticky` with variable text needs a fixed height — the jitter
 is invisible with a mouse and obvious with a thumb.
+
+### 37. Match-history cap enforced on write but not on read (2026-09-18, PR #21, layer: persistence/security — found by a security scan)
+
+`MAX_MATCHES` (100) lived only in `appendMatch`. `parseMatches` filtered stored records through
+`isMatchRecord` and returned them all, so anything same-origin that could write
+`battleship-ai.matches.v1` (extension, devtools, a future XSS) could plant thousands of valid rows
+and `HistoryPanel` would render every one — on load and again on every cross-tab `storage` event.
+The leaderboard's `parseEntries` already capped on read via `rankEntries().slice(0, MAX_ENTRIES)`;
+the two lists had drifted. Fix: `.slice(0, MAX_MATCHES)` on the read path; unit test with 300
+stored records; browser run planting 500 (reload and cross-tab both rendered exactly 100, page
+stayed responsive). Standalone impact is low — localStorage is this app's only trust boundary —
+but the lesson is general: when a list has a size invariant, the read and write paths must both
+enforce it, or the one you forgot is the one that gets exploited.

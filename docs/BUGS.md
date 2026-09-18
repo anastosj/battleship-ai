@@ -4,22 +4,25 @@ Battleship vs. a Hunt/Target AI — https://anastosj.github.io/battleship-ai/
 
 This is the short version. The full running log, kept from the first session and appended to in
 every PR (misses and corrections included), is [`BUGLOG.md`](./BUGLOG.md); numbers below refer to
-its entries. The game was built by Devin in four thin vertical slices (PR 1 skeleton → PR 2 AI →
-PR 3 placement/coin flip → PR 4 polish), each one deployed and played in a real browser before the
-next began. Twenty entries were logged; the ones worth reading are the ones the type system and
-the fuzzer did not catch.
+its entries. The game was built by Devin in twelve thin vertical slices (PR 1 skeleton → PR 2 AI →
+PR 3 placement/coin flip → PR 4 polish → PR 5 difficulty → PR 6–7 history and leaderboard →
+PR 8 theme → PR 9–12 feedback and mobile passes), each one deployed and played in a real browser
+before the next began, then put through a security scan. Thirty-seven entries were logged; the ones
+worth reading are the ones the type system and the fuzzer did not catch.
 
 ## How bugs were found
 
-| Method                                            | Entries           | What it was good at                                            |
-| ------------------------------------------------- | ----------------- | -------------------------------------------------------------- |
-| Reading the spec before writing code              | 1, 5              | Information-model holes (what the AI is allowed to know)       |
-| Lint / typecheck / CI                             | 2, 3, 10, 11      | Impure render code, stack drift, tool-generated files          |
-| Unit tests written first                          | 4, 12, 13         | State-machine ordering (coin reveal vs. AI timer)              |
-| Fuzzing with a ground-truth oracle (5,000 fleets) | 8, 9              | One-in-thousands AI logic errors; a wrong number in the spec   |
-| Actually playing the deployed build (recorded)    | **6, 15, 17, 19** | Everything the UI/state layer got wrong; jsdom sees none of it |
-| Owner playing the released game                   | 20                | Data that was technically correct but useless to a player      |
-| Automated code review (Devin Review)              | 18                | CSS box-model math a human eye skipped                         |
+| Method                                             | Entries                       | What it was good at                                                    |
+| -------------------------------------------------- | ----------------------------- | ---------------------------------------------------------------------- |
+| Reading the spec before writing code               | 1, 5                          | Information-model holes (what the AI is allowed to know)               |
+| Lint / typecheck / CI                              | 2, 3, 10, 11                  | Impure render code, stack drift, tool-generated files                  |
+| Unit tests written first                           | 4, 12, 13                     | State-machine ordering (coin reveal vs. AI timer)                      |
+| Fuzzing with a ground-truth oracle (5,000 fleets)  | 8, 9                          | One-in-thousands AI logic errors; a wrong number in the spec           |
+| Actually playing the deployed build (recorded)     | **6, 15, 17, 19**, 24, 30, 33 | Everything the UI/state layer got wrong; jsdom sees none of it         |
+| Owner playing the released game (incl. on a phone) | 20, 31, 32, **34**, 36        | Data that was correct but useless; touch-only bugs a mouse never shows |
+| Automated code review (Devin Review)               | 18, 23, 26, 28, 35            | CSS box-model math, multi-tab races, failure-branch follow-through     |
+| React hooks lint rules                             | 3, 25                         | StrictMode double-fire patterns that "work" in tests                   |
+| Security scan                                      | 37                            | Read/write asymmetry in localStorage trust boundary                    |
 
 ## The five that matter
 
@@ -89,6 +92,58 @@ hook gained a `flipping` flag that gates the AI timer (and disables the boards, 
   `content-box`. Caught by Devin Review, not by me; my "verified at 375 px" note in #17 had been
   written before the browser check. Fix: `box-sizing: border-box`.
 
+## Five more from the second half (PRs 5–12 and the security scan)
+
+### 6. Match history dedupe keyed on the game seed; two tabs clobbered each other (#26 — Devin Review)
+
+`appendMatch` used `seed` as the match identity, but `newSeed()` is 32 random bits, so two
+different games can share one and the second would silently never be saved. Every record now
+gets a `crypto.randomUUID()` id. Same PR: each tab loaded the list once and rewrote the whole key
+on every save, so a match finished in tab B could erase tab A's. `add` now re-reads storage before
+appending and the store listens to the window `storage` event. Follow-up (#28): when `setItem`
+threw (quota / private mode) the next update re-read stale storage and dropped the unsaved row —
+fixed with a `dirty` flag. Lesson: any localStorage read-modify-write needs the multi-tab and
+the write-failed questions asked out loud.
+
+### 7. One cell of a freshly placed ship looked different on a phone (#34 — user found it on an iPhone)
+
+Four filled cells and one "only a border". Touch browsers keep `:hover` stuck on the last tapped
+element, and the generic `button:hover` rule out-ranked `.cell.ship` by specificity, so that one
+cell painted in inverted colours. Every prior check ran with a mouse or keyboard, where hover
+leaves as soon as you do. All hover rules moved under `@media (hover: hover)`; the same pass moved
+the board you act on above the fold and pinned the status line, and #36 then gave the sticky
+status a fixed height because variable text made the grid jump under the thumb. Lesson:
+"responsive" verified at 375 px with a mouse checks that it fits, not that it is usable.
+
+### 8. The coin's landed face was never shown (#33 — found by the testing agent)
+
+The theme drew an anchor/crosshair on the coin, but the flip timer both revealed the result and
+started play, and `App` unmounted the coin the moment `flipping` went false — a MutationObserver
+measured 1002.8 ms from spin to removal. The player read the outcome from the status line. Added
+a `revealing` flag with a 1.5 s hold that also gates the AI's clock. Test miss: advancing fake
+timers by flip + reveal in one `act` didn't finish the reveal because the second timer is armed by
+an effect that only runs after React commits; split into two `act`s.
+
+### 9. Two hook drafts the React lint rules rejected (#25 — `eslint-plugin-react-hooks`)
+
+First `useMatchHistory` wrote a ref during render; the second called `setState` inside the
+game-over effect and mirrored to storage from another effect. Both passed Vitest; both are the
+patterns that double-fire under StrictMode and would have recorded a match twice on a dev build.
+Final shape: a tiny external store read through `useSyncExternalStore`, created per mount — a
+module-level singleton would have made the "persists across reload" test pass without touching
+storage. When a persistence test can pass without the persistence layer, the test is the bug.
+
+### 37. Match history cap enforced on write but not on read (#37 — security scan → PR #21)
+
+`MAX_MATCHES` (100) was applied only in `appendMatch`. Anything same-origin that could write
+`battleship-ai.matches.v1` (an extension, devtools, a future XSS) could plant thousands of valid
+records and `HistoryPanel` would render one `<tr>` each — a client-side DoS on load and on every
+cross-tab `storage` event. The leaderboard's sibling `parseEntries` already capped on read;
+`parseMatches` was the inconsistent one. Fix: `.slice(0, MAX_MATCHES)` on read, a unit test with
+300 stored records, and a browser run planting 500 (reload and cross-tab both rendered exactly
+100). Limited standalone impact — localStorage is the app's only trust boundary — but read and
+write paths of the same list should enforce the same invariant.
+
 ## Misses that were not bugs in the game
 
 - **The spec's shot-count band was a guess** (#9). §5.4 said "≈55–65 shots to win"; the AI it
@@ -107,6 +162,16 @@ hook gained a `flipping` flag that gates the AI timer (and disables the boards, 
 - **Game-over stats meant nothing** (#20). "Your shots: 54 · Enemy shots: 54" is correct and
   useless; the owner asked for hits. The modal now shows Shots, Hits (of 17) and Accuracy per side.
   PR 3's test only asserted that numbers were present.
+- **The test harness assumed the AI always wins inside 100 shots** (#22). The shared `playAI`
+  helper had the human fire water first, ships last, so it wins on its own 100th shot — fine for
+  Hard (worst case ≈95), wrong for Easy, which hunts at random. The first weaker AI found the
+  hidden assumption.
+- **Anything sized in `rem` moves when the theme changes the root font** (#24, #30). The VT323
+  theme raised 16 px → 20 px; cells grew and the two boards no longer fit side by side. Pinned the
+  desktop cap in pixels. Twice now the only check that caught it was a desktop-width screenshot.
+- **Approved from a description, rejected after playing** (#31, #32). Scanlines were kept on the
+  brief and cut after the user played the preview; the "Continue" button going dim → lit was not
+  read as a call to action until a person said so. Ship the preview before asking for the yes.
 
 ## What the AI is allowed to see
 
@@ -118,5 +183,6 @@ without looking at the board (#5).
 
 ## Verification
 
-`npm run lint && npm run typecheck && npm test && npm run build` — 54 tests across 6 files, plus
-`npm run selfplay` (1,000 games) and a recorded browser run of every deployed slice.
+`npm run lint && npm run typecheck && npm test && npm run build` — 92 tests across 9 files, plus
+`npm run selfplay` (1,000 games), a recorded browser run of every deployed slice (desktop and an
+iPhone touch profile), Devin Review on every PR, and a security scan of the final code.
