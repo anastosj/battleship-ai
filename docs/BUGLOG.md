@@ -379,3 +379,20 @@ pure `appendMatch`. While writing the "persists across reload" test I also caugh
 module-level singleton store would have made that test vacuous (the list survives unmount without
 touching storage), so the store is created per mount. Lesson: the React lint rules were right both
 times; and when a persistence test can pass without the persistence layer, the test is the bug.
+
+### 26. History dedupe keyed on the game seed; two tabs could clobber each other (2026-09-18, PR 6, layer: persistence — caught by Devin Review)
+
+Two findings on the first push of PR 6, both valid.
+
+1. `appendMatch` treated `seed` as the match identity. `newSeed()` is 32 random bits, so two
+   different games can legitimately share one, and the second would silently never be saved.
+   Fix: every record gets an `id` (`crypto.randomUUID()`), dedupe is by `id`, and the
+   "record once" guard moved to the hook (it remembers the last `game` object it recorded).
+   `seed` stays as metadata. Test: same seed, different id → two rows.
+2. Each tab loaded the list once and rewrote the whole key on every save, so a match finished in
+   tab B could erase the one tab A had just written. Fix: `add` re-reads storage before appending,
+   and the store subscribes to the window `storage` event (attached on first subscriber, removed on
+   last) so the other tab's list updates live. Test: two stores on one in-memory storage.
+
+Lesson: "the seed identifies the game" was true inside one engine run and false the moment records
+outlive it; and any localStorage read-modify-write needs the multi-tab question asked out loud.

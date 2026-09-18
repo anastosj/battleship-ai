@@ -42,7 +42,7 @@ export const HistoryPanel = ({ matches, clear }: Props) => {
           </thead>
           <tbody>
             {matches.map((m) => (
-              <tr key={m.seed} className={m.winner === 'human' ? 'won' : 'lost'}>
+              <tr key={m.id} className={m.winner === 'human' ? 'won' : 'lost'}>
                 <td>{when(m.playedAt)}</td>
                 <td>{DIFFICULTY_NAMES[m.difficulty]}</td>
                 <td>{m.winner === 'human' ? 'Won' : 'Lost'}</td>

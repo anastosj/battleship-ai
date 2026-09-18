@@ -4,9 +4,11 @@ import { DIFFICULTIES, type Difficulty, type GameState, type Player } from '../e
 export type SideStats = { shots: number; hits: number; fleetCells: number };
 
 export type MatchRecord = {
+  /** Unique per match; the dedupe key. */
+  id: string;
   /** ISO-8601 timestamp of game over. */
   playedAt: string;
-  /** Game seed; identifies the match so one game is never recorded twice. */
+  /** Game seed (gameplay metadata; not unique — 32 random bits). */
   seed: number;
   difficulty: Difficulty;
   winner: Player;
@@ -18,11 +20,12 @@ export const STORAGE_KEY = 'battleship-ai.matches.v1';
 export const MAX_MATCHES = 100;
 
 /** Pure: derives the record from a finished game. Throws if the game is not over. */
-export const recordFor = (game: GameState, playedAt: string): MatchRecord => {
+export const recordFor = (game: GameState, id: string, playedAt: string): MatchRecord => {
   if (game.phase !== 'gameover' || game.winner === undefined) {
     throw new Error('recordFor: game is not over');
   }
   return {
+    id,
     playedAt,
     seed: game.seed,
     difficulty: game.difficulty,
@@ -40,12 +43,12 @@ export const recordFor = (game: GameState, playedAt: string): MatchRecord => {
   };
 };
 
-/** Newest first, deduplicated by seed, capped at `MAX_MATCHES`. */
+/** Newest first, deduplicated by `id`, capped at `MAX_MATCHES`. */
 export const appendMatch = (
   matches: readonly MatchRecord[],
   match: MatchRecord,
 ): readonly MatchRecord[] =>
-  matches.some((m) => m.seed === match.seed) ? matches : [match, ...matches].slice(0, MAX_MATCHES);
+  matches.some((m) => m.id === match.id) ? matches : [match, ...matches].slice(0, MAX_MATCHES);
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
 const isCount = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v) && v >= 0;
@@ -56,6 +59,8 @@ const isDifficulty = (v: unknown): v is Difficulty =>
 
 export const isMatchRecord = (v: unknown): v is MatchRecord =>
   isRecord(v) &&
+  typeof v.id === 'string' &&
+  v.id.length > 0 &&
   typeof v.playedAt === 'string' &&
   !Number.isNaN(Date.parse(v.playedAt)) &&
   isCount(v.seed) &&
