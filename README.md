@@ -82,8 +82,10 @@ slice. Devin wrote the code, tests and log entries.
   devices, and clearing site data clears them. `localStorage` is also the app's only trust
   boundary — the read paths validate every record and cap list sizes (#37), but anything
   same-origin can still edit your own scores.
-- **Two tabs finishing a game in the same millisecond** can lose one row: Web Storage has no
-  atomic read-modify-write (#26). Ordinary cross-tab use is handled via the `storage` event.
+- **Two tabs finishing games at nearly the same time** can lose one row: each tab re-reads
+  storage just before writing, but Web Storage has no atomic read-modify-write, so two writes
+  whose read-then-write windows overlap keep only the later one (#26). Ordinary cross-tab use is
+  handled via the `storage` event.
 - **The Hard AI's sunk-ship inference is a heuristic.** With touching ships and an unlucky hit
   order it can attribute the wrong cells; a recovery path (#8) keeps it from abandoning a live
   hit, but roughly 1 in 5,000 games still costs it a few extra shots.
