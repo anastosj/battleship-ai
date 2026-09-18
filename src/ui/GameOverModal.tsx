@@ -6,7 +6,17 @@ type Props = { game: GameState; playAgain: () => void };
 
 export const GameOverModal = ({ game, playAgain }: Props) => {
   const button = useRef<HTMLButtonElement>(null);
-  useEffect(() => button.current?.focus(), []);
+  useEffect(() => {
+    button.current?.focus();
+    const keep = (e: KeyboardEvent) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        button.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', keep);
+    return () => window.removeEventListener('keydown', keep);
+  }, []);
 
   const won = game.winner === 'human';
   return (

@@ -9,9 +9,30 @@ no backend, deployed to GitHub Pages on every push to `main`.
 
 Playable end to end: manual placement (click, **R** to rotate, pick ships back up) or
 "Randomize fleet" (repeatable), one-shot coin flip for first move (heads = you, tails = AI),
-Hunt/Target AI with a 250 ms reply, fleet panels, game-over modal with "Play again".
-Responsive/accessibility polish and an error boundary follow in PR 4 — see `docs/BUGLOG.md` for
-the running bug/miss log.
+Hunt/Target AI with a 250 ms reply, fleet panels, game-over modal with "Play again". Boards
+stack on narrow screens, every cell is a labelled `<button>` with a state glyph (never colour
+alone), and a React error boundary turns a crash into a message with a reload button.
+
+## How to play
+
+1. **Place your fleet** — pick a ship from the tray and click your board. **R** (or the Rotate
+   button) toggles orientation; green preview = legal, red = not. Click a placed ship to pick it
+   up again, or press **Randomize fleet** as often as you like.
+2. **Flip the coin** — once. Heads: you fire first. Tails: the AI opens.
+3. **Fire** by clicking a cell in Enemy waters. Miss `•`, hit `✕`, sunk `☒`. The AI answers
+   250 ms later. First to sink all five ships wins; the enemy's surviving ships are revealed at
+   the end.
+
+## The AI
+
+One Hunt/Target opponent, no difficulty levels. It sees only its own shots and their results
+(`AIView`) — never the board — and a test enforces that `src/ai/**` cannot import the board types.
+Hunt: checkerboard parity filtered by whether the smallest surviving ship still fits. Target:
+extend lines through unresolved hits; when a ship sinks, infer which hits belonged to it from the
+reported length so a touching ship is not abandoned (see `docs/BUGLOG.md` #1, #8). A self-play test
+checks the average shots-to-win over random fleets stays within 46–65.
+
+See `docs/BUGLOG.md` for the running log of bugs and first-attempt misses.
 
 ## Develop
 
