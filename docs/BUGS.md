@@ -22,7 +22,7 @@ worth reading are the ones the type system and the fuzzer did not catch.
 | Owner playing the released game (incl. on a phone) | 20, 31, 32, **34**, 36        | Data that was correct but useless; touch-only bugs a mouse never shows |
 | Automated code review (Devin Review)               | 18, 23, 26, 28, 35            | CSS box-model math, multi-tab races, failure-branch follow-through     |
 | React hooks lint rules                             | 3, 25                         | StrictMode double-fire patterns that "work" in tests                   |
-| Security scan                                      | S1                            | Read/write asymmetry in localStorage trust boundary                    |
+| Security scan                                      | 37                            | Read/write asymmetry in localStorage trust boundary                    |
 
 ## The five that matter
 
