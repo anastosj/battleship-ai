@@ -396,3 +396,7 @@ Two findings on the first push of PR 6, both valid.
 
 Lesson: "the seed identifies the game" was true inside one engine run and false the moment records
 outlive it; and any localStorage read-modify-write needs the multi-tab question asked out loud.
+
+Known limit, left open on purpose: two tabs finishing games in the same millisecond can still
+race the read-modify-write (Web Storage has no atomic update). Closing that needs IndexedDB or a
+Web Locks mutex; not worth it for a per-device match list. Worst case is one lost row.
