@@ -52,3 +52,9 @@ export const allSunk = (board: Board): boolean =>
   board.ships.length > 0 && board.ships.every((s) => isSunk(board, s));
 
 export const shotCount = (board: Board): number => Object.keys(board.shots).length;
+
+export const hitCount = (board: Board): number =>
+  Object.values(board.shots).filter((m) => m === 'hit').length;
+
+export const fleetCellCount = (board: Board): number =>
+  board.ships.reduce((n, s) => n + SHIP_SIZES[s.kind], 0);
