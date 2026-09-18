@@ -357,7 +357,7 @@ describe('match history', () => {
 
   it('is hidden until a game finishes, then lists it once and persists across reloads', () => {
     const view = render(<App seed={seedFor('tails')} />);
-    expect(screen.queryByText('Previous matches')).toBeNull();
+    expect(screen.queryByText("Ship's log")).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Randomize fleet' }));
     fireEvent.click(screen.getByRole('button', { name: 'Continue to coin flip' }));
     fireEvent.click(screen.getByRole('button', { name: 'Flip coin' }));
@@ -368,7 +368,7 @@ describe('match history', () => {
     const won = /You win/.test(dialog.textContent ?? '');
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Play again' }));
-    expect(screen.getByText('Previous matches')).toBeInTheDocument();
+    expect(screen.getByText("Ship's log")).toBeInTheDocument();
     expect(rows()).toHaveLength(1);
     const cells = within(rows()[0]!)
       .getAllByRole('cell')
@@ -376,14 +376,14 @@ describe('match history', () => {
     expect(cells[1]).toBe('Hard');
     expect(cells[2]).toBe(won ? 'Won' : 'Lost');
     expect(cells[won ? 4 : 6]).toBe('17 / 17');
-    expect(screen.getByText(won ? '1–0 vs. the AI' : '0–1 vs. the AI')).toBeInTheDocument();
+    expect(screen.getByText(won ? '1–0 vs. the enemy' : '0–1 vs. the enemy')).toBeInTheDocument();
 
     view.unmount();
     render(<App seed={seedFor('heads')} />);
     expect(rows()).toHaveLength(1);
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear history' }));
-    expect(screen.queryByText('Previous matches')).toBeNull();
+    expect(screen.queryByText("Ship's log")).toBeNull();
     expect(localStorage.length).toBe(0);
   });
 
@@ -391,7 +391,7 @@ describe('match history', () => {
     localStorage.setItem('battleship-ai.matches.v1', '{oops');
     startWith('tails');
     fireEvent.click(screen.getByRole('button', { name: 'New game' }));
-    expect(screen.queryByText('Previous matches')).toBeNull();
+    expect(screen.queryByText("Ship's log")).toBeNull();
   });
 });
 
@@ -428,21 +428,21 @@ describe('leaderboard', () => {
     expect(dialog.textContent).toContain('You win!');
     return dialog;
   };
-  const board = () => screen.getByRole('table', { name: 'Leaderboard' });
+  const board = () => screen.getByRole('table', { name: 'Hall of Captains' });
   const boardRows = () => within(board()).getAllByRole('row').slice(1);
 
   it('prompts for a name on a qualifying win, ranks it, persists it, and survives Clear history', () => {
     const view = winPerfectly();
-    expect(screen.getByText('17 shots makes the leaderboard!')).toBeInTheDocument();
-    const input = screen.getByLabelText('Your name');
+    expect(screen.getByText('17 shots earns a place in the Hall of Captains!')).toBeInTheDocument();
+    const input = screen.getByLabelText("Captain's name");
     expect(input).toHaveFocus();
-    const save = screen.getByRole('button', { name: 'Save to leaderboard' });
+    const save = screen.getByRole('button', { name: 'Enter the Hall' });
     expect(save).toBeDisabled();
     fireEvent.change(input, { target: { value: '  Grace  Hopper ' } });
     expect(save).toBeEnabled();
     fireEvent.click(save);
-    expect(screen.queryByLabelText('Your name')).toBeNull();
-    expect(screen.getByText("Saved — you're #1 on the leaderboard.")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Captain's name")).toBeNull();
+    expect(screen.getByText("Saved — you're #1 in the Hall of Captains.")).toBeInTheDocument();
 
     fireEvent.click(within(view).getByRole('button', { name: 'Play again' }));
     expect(boardRows()).toHaveLength(1);
@@ -452,7 +452,7 @@ describe('leaderboard', () => {
     expect(cells.slice(0, 4)).toEqual(['1', 'Grace Hopper', '17', 'Hard']);
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear history' }));
-    expect(screen.queryByText('Previous matches')).toBeNull();
+    expect(screen.queryByText("Ship's log")).toBeNull();
     expect(boardRows()).toHaveLength(1);
     expect(localStorage.getItem('battleship-ai.leaderboard.v1')).toContain('Grace Hopper');
   });
@@ -471,11 +471,11 @@ describe('leaderboard', () => {
       ]),
     );
     const view = winPerfectly();
-    const input = screen.getByLabelText<HTMLInputElement>('Your name');
+    const input = screen.getByLabelText<HTMLInputElement>("Captain's name");
     expect(input.value).toBe('Previous');
     fireEvent.submit(input.closest('form')!);
     fireEvent.submit(input.closest('form')!); // no second entry
-    expect(screen.getByText("Saved — you're #1 on the leaderboard.")).toBeInTheDocument();
+    expect(screen.getByText("Saved — you're #1 in the Hall of Captains.")).toBeInTheDocument();
     fireEvent.click(within(view).getByRole('button', { name: 'Play again' }));
     expect(boardRows().map((r) => within(r).getAllByRole('cell')[1]!.textContent)).toEqual([
       'Previous',
@@ -487,7 +487,7 @@ describe('leaderboard', () => {
     ]);
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear leaderboard' }));
-    expect(screen.queryByRole('table', { name: 'Leaderboard' })).toBeNull();
+    expect(screen.queryByRole('table', { name: 'Hall of Captains' })).toBeNull();
     expect(localStorage.getItem('battleship-ai.leaderboard.v1')).toBeNull();
   });
 
@@ -505,7 +505,7 @@ describe('leaderboard', () => {
       ),
     );
     winPerfectly();
-    expect(screen.queryByLabelText('Your name')).toBeNull();
+    expect(screen.queryByLabelText("Captain's name")).toBeNull();
     expect(screen.getByRole('button', { name: 'Play again' })).toHaveFocus();
   });
 });
@@ -522,8 +522,8 @@ describe('error boundary', () => {
       </ErrorBoundary>,
     );
     silence.mockRestore();
-    expect(screen.getByRole('alert').textContent).toContain('Something went wrong');
+    expect(screen.getByRole('alert').textContent).toContain('Console fault');
     expect(screen.getByText('kaboom')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Reload the game' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reboot the console' })).toBeInTheDocument();
   });
 });

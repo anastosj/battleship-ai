@@ -27,7 +27,7 @@ import {
   type ShotResult,
 } from '../engine/types';
 
-export const AI_DELAY_MS = 250;
+export const AI_DELAY_MS = 500;
 /** How long the coin "spins" before the result is shown and play begins. */
 export const COIN_FLIP_MS = 1000;
 
@@ -59,9 +59,9 @@ const describe = (shooter: Player, result: ShotResult): string | undefined => {
   const you = shooter === 'human';
   switch (result.kind) {
     case 'miss':
-      return you ? 'Miss.' : 'Enemy missed.';
+      return you ? 'Miss — splash, no contact.' : 'Enemy missed.';
     case 'hit':
-      return you ? 'Hit!' : 'Enemy hit your ship!';
+      return you ? 'Hit! Direct contact.' : 'Enemy hit your ship!';
     case 'sunk':
       return you
         ? `You sank their ${SHIP_NAMES[result.ship]}!`
@@ -112,7 +112,7 @@ export const reducer = (ui: UIState, action: Action): UIState => {
       return {
         ...ui,
         flipping: false,
-        lastHuman: heads ? 'Heads — you fire first.' : 'Tails — enemy fires first.',
+        lastHuman: heads ? 'Heads — you have the first salvo.' : 'Tails — enemy opens fire.',
         lastAi: '',
       };
     }

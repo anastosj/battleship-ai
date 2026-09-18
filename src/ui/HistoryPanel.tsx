@@ -19,9 +19,9 @@ export const HistoryPanel = ({ matches, clear }: Props) => {
   return (
     <section className="history" aria-labelledby="history-title">
       <div className="history-head">
-        <h2 id="history-title">Previous matches</h2>
+        <h2 id="history-title">Ship's log</h2>
         <span className="history-summary">
-          {wins}–{matches.length - wins} vs. the AI
+          {wins}–{matches.length - wins} vs. the enemy
         </span>
         <button type="button" onClick={clear}>
           Clear history

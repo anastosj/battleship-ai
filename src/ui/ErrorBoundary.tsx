@@ -20,11 +20,11 @@ export class ErrorBoundary extends Component<Props, State> {
     if (error === undefined) return this.props.children;
     return (
       <main className="crash" role="alert">
-        <h1>Something went wrong</h1>
-        <p>The game hit an unexpected error and had to stop.</p>
+        <h1>Console fault</h1>
+        <p>The bridge hit an unexpected error and had to stop, Captain.</p>
         <pre>{error.message}</pre>
         <button type="button" className="primary" onClick={() => window.location.reload()}>
-          Reload the game
+          Reboot the console
         </button>
       </main>
     );
