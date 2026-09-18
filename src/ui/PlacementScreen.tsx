@@ -114,7 +114,7 @@ export const PlacementScreen = ({
         <p className="hint">
           {selected === undefined
             ? 'All ships placed. Click a ship on the board to move it, or continue.'
-            : `Placing ${SHIP_NAMES[selected]}: click a cell for its bow. Click a placed ship to pick it up.`}
+            : `Placing ${SHIP_NAMES[selected]}: click or focus a cell and press Enter for its bow. Click a placed ship to pick it up.`}
         </p>
       </div>
       <Board
