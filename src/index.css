@@ -272,3 +272,19 @@ button.big {
     padding: 1.25rem;
   }
 }
+
+.stats {
+  margin: 0.75rem auto;
+  border-collapse: collapse;
+}
+
+.stats th,
+.stats td {
+  padding: 0.2rem 0.75rem;
+  text-align: right;
+}
+
+.stats th[scope='row'] {
+  text-align: left;
+  font-weight: 500;
+}

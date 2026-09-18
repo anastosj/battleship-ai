@@ -218,7 +218,25 @@ describe('game over and play again', () => {
     }
     const dialog = screen.getByRole('dialog');
     expect(dialog.textContent).toMatch(/You (win|lose)/);
-    expect(dialog.textContent).toMatch(/Your shots: \d+ · Enemy shots: \d+/);
+    const cells = (name: string) => {
+      const row = within(dialog)
+        .getAllByRole('row')
+        .find((r) => within(r).queryByRole('rowheader', { name }) !== null);
+      if (row === undefined) throw new Error(`no ${name} row`);
+      return within(row).getAllByRole('cell');
+    };
+    const hits = cells('Hits').map((c) => c.textContent);
+    expect(hits).toHaveLength(2);
+    const winnerHits = /You win/.test(dialog.textContent ?? '') ? hits[0] : hits[1];
+    expect(winnerHits).toBe('17 / 17');
+    expect(cells('Shots').map((c) => c.textContent)).toEqual([
+      expect.stringMatching(/^\d+$/),
+      expect.stringMatching(/^\d+$/),
+    ]);
+    expect(cells('Accuracy').map((c) => c.textContent)).toEqual([
+      expect.stringMatching(/^\d+%$/),
+      expect.stringMatching(/^\d+%$/),
+    ]);
     expect(shipCells(grid('Enemy waters')) + marks(grid('Enemy waters'))).toBeGreaterThanOrEqual(
       17,
     );

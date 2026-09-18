@@ -306,3 +306,13 @@ the enemy fleet" (fails on the old code for all five seeds tried).
 What would have caught it earlier: an invariant test "human fleet ≠ AI fleet after Randomize", or
 simply an eye on the reveal at game over. It is exactly the class of bug §8.1 warned about —
 invisible during play, only obvious once you compare the two boards.
+
+### 20. Game-over stats were useless to a player (2026-09-18, PR 3 → fixed after release, layer: ui — owner feedback)
+
+Symptom: the modal read "The enemy sank your fleet in 54 shots. Your shots: 54 · Enemy shots: 54".
+Total shots alone says nothing about how well either side played; the owner asked for hits.
+
+Fix: a small table — Shots, Hits (out of 17 fleet cells), Accuracy — for both sides, built from
+two new pure helpers `hitCount` and `fleetCellCount` in `engine/board.ts`. Test now checks the
+winner's row reads `17 / 17`. Lesson: PR 3's modal test asserted on the presence of numbers, not
+on whether they meant anything.
