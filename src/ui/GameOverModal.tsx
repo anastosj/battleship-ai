@@ -1,25 +1,58 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { fleetCellCount, hitCount, shotCount } from '../engine/board';
 import type { GameState } from '../engine/types';
+import { MAX_NAME_LENGTH, normalizeName } from '../history/leaderboard';
 
-type Props = { game: GameState; playAgain: () => void };
+export type LeaderboardPrompt = {
+  qualifying: boolean;
+  saved: boolean;
+  rank: number | undefined;
+  lastName: string;
+  submit: (name: string) => boolean;
+};
+
+type Props = { game: GameState; playAgain: () => void; leaderboard: LeaderboardPrompt };
 
 const pct = (hits: number, shots: number): string =>
   shots === 0 ? '—' : `${Math.round((100 * hits) / shots)}%`;
 
-export const GameOverModal = ({ game, playAgain }: Props) => {
-  const button = useRef<HTMLButtonElement>(null);
+const FOCUSABLE = 'input:not([disabled]), button:not([disabled])';
+
+export const GameOverModal = ({ game, playAgain, leaderboard }: Props) => {
+  const modal = useRef<HTMLDivElement>(null);
+  const [name, setName] = useState(leaderboard.lastName);
+
   useEffect(() => {
-    button.current?.focus();
-    const keep = (e: KeyboardEvent) => {
-      if (e.key === 'Tab') {
+    const el = modal.current;
+    if (!el) return;
+    const focusables = () => [...el.querySelectorAll<HTMLElement>(FOCUSABLE)];
+    focusables()[0]?.focus();
+    const trap = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const items = focusables();
+      if (items.length === 0) return;
+      const first = items[0]!;
+      const last = items[items.length - 1]!;
+      const active = document.activeElement;
+      if (!el.contains(active)) {
         e.preventDefault();
-        button.current?.focus();
+        first.focus();
+      } else if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
       }
     };
-    window.addEventListener('keydown', keep);
-    return () => window.removeEventListener('keydown', keep);
+    window.addEventListener('keydown', trap);
+    return () => window.removeEventListener('keydown', trap);
   }, []);
+
+  const onSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    leaderboard.submit(name);
+  };
 
   const won = game.winner === 'human';
   const yourShots = shotCount(game.ai);
@@ -28,7 +61,13 @@ export const GameOverModal = ({ game, playAgain }: Props) => {
   const enemyHits = hitCount(game.human);
   return (
     <div className="modal-backdrop">
-      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="gameover-title">
+      <div
+        ref={modal}
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="gameover-title"
+      >
         <h2 id="gameover-title">{won ? 'You win!' : 'You lose'}</h2>
         <p>
           {won
@@ -65,7 +104,34 @@ export const GameOverModal = ({ game, playAgain }: Props) => {
             </tr>
           </tbody>
         </table>
-        <button ref={button} type="button" className="primary" onClick={playAgain}>
+
+        {leaderboard.qualifying && (
+          <form className="leaderboard-prompt" onSubmit={onSubmit}>
+            <p className="leaderboard-callout">{yourShots} shots makes the leaderboard!</p>
+            <label>
+              Your name
+              <input
+                type="text"
+                value={name}
+                maxLength={MAX_NAME_LENGTH}
+                autoComplete="nickname"
+                onChange={(e) => setName(e.target.value)}
+              />
+            </label>
+            <button type="submit" disabled={normalizeName(name) === ''}>
+              Save to leaderboard
+            </button>
+          </form>
+        )}
+        {leaderboard.saved && (
+          <p className="leaderboard-callout" role="status">
+            {leaderboard.rank === undefined
+              ? 'Saved to the leaderboard.'
+              : `Saved — you're #${leaderboard.rank} on the leaderboard.`}
+          </p>
+        )}
+
+        <button type="button" className="primary" onClick={playAgain}>
           Play again
         </button>
       </div>

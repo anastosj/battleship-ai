@@ -400,3 +400,24 @@ outlive it; and any localStorage read-modify-write needs the multi-tab question 
 Known limit, left open on purpose: two tabs finishing games in the same millisecond can still
 race the read-modify-write (Web Storage has no atomic update). Closing that needs IndexedDB or a
 Web Locks mutex; not worth it for a per-device match list. Worst case is one lost row.
+
+### 27. Leaderboard: my own test encoded the wrong tie-break, and "leaderboard time" for a shot count (2026-09-18, PR 7, layer: persistence/UI — caught by the test suite and re-reading the modal copy)
+
+Two small misses on the first pass, neither in shipped code.
+
+1. The ranking rule is "fewest shots, then earliest win". My `addEntry` test inserted an entry
+   with the same shots as #2 but an _earlier_ date and asserted it would land at #3; the code
+   correctly put it at #2 and the test failed. The rule was right, my head-math was wrong — I
+   fixed the fixture (later date) and left the rule alone. Lesson: when a fresh test fails, ask
+   which side is wrong before touching the implementation.
+2. The first modal callout said "That's a leaderboard time!" — the leaderboard is ranked by
+   shots, not time. Changed to "17 shots makes the leaderboard!" so the number the player is
+   being ranked on is the number on screen.
+
+Design notes for the record: the leaderboard is its own key (`battleship-ai.leaderboard.v1`),
+not derived from match history, so "Clear history" cannot erase names (tested), and a win only
+prompts when it would actually place in the top 10 (tested with a full board of 17-shot wins).
+The modal's focus trap now discovers focusables on each Tab press instead of pinning the one
+button, since the name field appears and disappears. The localStorage mechanics from PR 6 moved
+into a shared `createStoredList` so both lists get the same re-read-before-write and
+cross-tab `storage` handling; the history tests were the regression check for that move.
