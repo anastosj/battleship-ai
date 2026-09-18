@@ -395,6 +395,121 @@ describe('match history', () => {
   });
 });
 
+describe('leaderboard', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    localStorage.clear();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    localStorage.clear();
+  });
+
+  /** Heads (human first), then shoot every enemy ship cell: a 17-shot win the AI cannot beat. */
+  const winPerfectly = (seed = seedFor('heads')) => {
+    render(<App seed={seed} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Randomize fleet' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to coin flip' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Flip coin' }));
+    act(() => {
+      vi.advanceTimersByTime(COIN_FLIP_MS + 10);
+    });
+    const cells = randomFleet(makeRng(seed)).flatMap((s) => engineShipCells(s));
+    for (const c of cells) {
+      if (screen.queryByRole('dialog')) break;
+      fireEvent.click(
+        within(grid('Enemy waters')).getByRole('button', { name: `${cellLabel(c)}, water` }),
+      );
+      act(() => {
+        vi.advanceTimersByTime(AI_DELAY_MS + 10);
+      });
+    }
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.textContent).toContain('You win!');
+    return dialog;
+  };
+  const board = () => screen.getByRole('table', { name: 'Leaderboard' });
+  const boardRows = () => within(board()).getAllByRole('row').slice(1);
+
+  it('prompts for a name on a qualifying win, ranks it, persists it, and survives Clear history', () => {
+    const view = winPerfectly();
+    expect(screen.getByText('17 shots makes the leaderboard!')).toBeInTheDocument();
+    const input = screen.getByLabelText('Your name');
+    expect(input).toHaveFocus();
+    const save = screen.getByRole('button', { name: 'Save to leaderboard' });
+    expect(save).toBeDisabled();
+    fireEvent.change(input, { target: { value: '  Grace  Hopper ' } });
+    expect(save).toBeEnabled();
+    fireEvent.click(save);
+    expect(screen.queryByLabelText('Your name')).toBeNull();
+    expect(screen.getByText("Saved — you're #1 on the leaderboard.")).toBeInTheDocument();
+
+    fireEvent.click(within(view).getByRole('button', { name: 'Play again' }));
+    expect(boardRows()).toHaveLength(1);
+    const cells = within(boardRows()[0]!)
+      .getAllByRole('cell')
+      .map((c) => c.textContent);
+    expect(cells.slice(0, 4)).toEqual(['1', 'Grace Hopper', '17', 'Hard']);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear history' }));
+    expect(screen.queryByText('Previous matches')).toBeNull();
+    expect(boardRows()).toHaveLength(1);
+    expect(localStorage.getItem('battleship-ai.leaderboard.v1')).toContain('Grace Hopper');
+  });
+
+  it('prefills the last name, dedupes per game, and Clear leaderboard empties it', () => {
+    localStorage.setItem(
+      'battleship-ai.leaderboard.v1',
+      JSON.stringify([
+        {
+          id: 'p',
+          name: 'Previous',
+          shots: 40,
+          difficulty: 'easy',
+          playedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ]),
+    );
+    const view = winPerfectly();
+    const input = screen.getByLabelText<HTMLInputElement>('Your name');
+    expect(input.value).toBe('Previous');
+    fireEvent.submit(input.closest('form')!);
+    fireEvent.submit(input.closest('form')!); // no second entry
+    expect(screen.getByText("Saved — you're #1 on the leaderboard.")).toBeInTheDocument();
+    fireEvent.click(within(view).getByRole('button', { name: 'Play again' }));
+    expect(boardRows().map((r) => within(r).getAllByRole('cell')[1]!.textContent)).toEqual([
+      'Previous',
+      'Previous',
+    ]);
+    expect(boardRows().map((r) => within(r).getAllByRole('cell')[2]!.textContent)).toEqual([
+      '17',
+      '40',
+    ]);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear leaderboard' }));
+    expect(screen.queryByRole('table', { name: 'Leaderboard' })).toBeNull();
+    expect(localStorage.getItem('battleship-ai.leaderboard.v1')).toBeNull();
+  });
+
+  it('does not prompt when the win would not make a full board', () => {
+    localStorage.setItem(
+      'battleship-ai.leaderboard.v1',
+      JSON.stringify(
+        Array.from({ length: 10 }, (_, i) => ({
+          id: `e${i}`,
+          name: `P${i}`,
+          shots: 17,
+          difficulty: 'hard',
+          playedAt: '2026-01-01T00:00:00.000Z',
+        })),
+      ),
+    );
+    winPerfectly();
+    expect(screen.queryByLabelText('Your name')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Play again' })).toHaveFocus();
+  });
+});
+
 describe('error boundary', () => {
   it('renders a recovery message instead of a white screen when a child throws', () => {
     const Boom = () => {

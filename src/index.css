@@ -362,3 +362,42 @@ button.big {
 .history-table tr.lost td:nth-child(3) {
   color: #8b1e1a;
 }
+.leaderboard-prompt {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 0.5rem 0.75rem;
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  background: #f0f7f1;
+  border-radius: 6px;
+}
+.leaderboard-prompt p {
+  flex-basis: 100%;
+  margin: 0;
+}
+.leaderboard-prompt label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 0.9rem;
+  text-align: left;
+}
+.leaderboard-prompt input {
+  font: inherit;
+  padding: 0.35rem 0.5rem;
+  width: 12rem;
+  max-width: 60vw;
+}
+.leaderboard-callout {
+  color: #14532d;
+  font-weight: 600;
+}
+.leaderboard-table td:first-child {
+  text-align: right;
+}
+.leaderboard-table td:nth-child(3) {
+  text-align: right;
+  font-weight: 600;
+}
