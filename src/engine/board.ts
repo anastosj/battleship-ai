@@ -35,6 +35,11 @@ export const placeShip = (board: Board, ship: Ship): Board => {
   return { ...board, ships: [...board.ships, ship] };
 };
 
+export const removeShip = (board: Board, kind: Ship['kind']): Board => ({
+  ...board,
+  ships: board.ships.filter((s) => s.kind !== kind),
+});
+
 export const shipAt = (board: Board, c: Coord): Ship | undefined =>
   board.ships.find((s) => shipCells(s).some((sc) => sc.row === c.row && sc.col === c.col));
 

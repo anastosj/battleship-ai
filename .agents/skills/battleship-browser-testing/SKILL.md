@@ -6,11 +6,13 @@ description: Play Battleship AI locally or on its live deployment, including AI 
 # Battleship browser testing
 
 ## Live deployment
+
 - When asked to test deployment, browse
   `https://anastosj.github.io/battleship-ai/` directly; do not substitute a local
   build. This public client-side app requires no credentials or local services.
 
 ## Local setup
+
 - From the repository root, source `~/.nvm/nvm.sh` and use Node 24.
 - With dependencies installed, run `npm run build`, then
   `npm run preview -- --port 4173` (reuse an existing preview if appropriate).
@@ -18,6 +20,7 @@ description: Play Battleship AI locally or on its live deployment, including AI 
 - This version is client-side and requires no login or backend.
 
 ## Gameplay observation
+
 - Scope cell buttons to the grids labeled `Your fleet` or `Enemy waters`.
   Buttons have coordinate/state accessible labels such as `F2, water`.
 - Read the current fleets from `src/engine/fleet.ts` rather than assuming
@@ -39,6 +42,7 @@ description: Play Battleship AI locally or on its live deployment, including AI 
   attribution coverage; separated fleets cannot exercise that case.
 
 ## Timing-sensitive UI tests
+
 - The walking skeleton schedules AI replies after 250 ms. General computer-tool
   click batching may exceed this window, so measure actual pointer timestamps.
 - For native timed inputs on Linux, query `xrandr --current`, scale screenshot
@@ -51,4 +55,5 @@ description: Play Battleship AI locally or on its live deployment, including AI 
   wait beyond the AI delay to rule out leaked shots.
 
 ## Devin Secrets Needed
+
 None for local or public live browser gameplay.

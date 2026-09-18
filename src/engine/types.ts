@@ -45,11 +45,15 @@ export type ShotResult =
 
 export type Player = 'human' | 'ai';
 
-export type Phase = 'playing' | 'gameover';
+export type Phase = 'placement' | 'coinflip' | 'playing' | 'gameover';
+
+export type Coin = 'heads' | 'tails';
 
 export type GameState = {
   phase: Phase;
+  /** Meaningful only once `phase === 'playing'`; before the coin flip it is a placeholder. */
   turn: Player;
+  coin?: Coin;
   human: Board;
   ai: Board;
   /** Log of the AI's own shots and their results; the sole source of AIView. */

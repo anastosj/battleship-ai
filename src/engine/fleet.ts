@@ -1,8 +1,8 @@
 import { canPlace, emptyBoard, placeShip } from './board';
 import { randomInt } from './rng';
-import { BOARD_SIZE, SHIP_SIZES, type RNG, type Ship, type ShipKind } from './types';
+import { BOARD_SIZE, SHIP_KINDS, SHIP_SIZES, type RNG, type Ship } from './types';
 
-/** Fixed fleets for the walking skeleton. Placement UI replaces these later. */
+/** Fixed fleets used by engine tests and as `newGame` defaults. */
 export const FIXED_HUMAN_FLEET: readonly Ship[] = [
   { kind: 'carrier', bow: { row: 0, col: 0 }, orientation: 'h' },
   { kind: 'battleship', bow: { row: 2, col: 1 }, orientation: 'v' },
@@ -17,14 +17,6 @@ export const FIXED_AI_FLEET: readonly Ship[] = [
   { kind: 'cruiser', bow: { row: 0, col: 1 }, orientation: 'h' },
   { kind: 'submarine', bow: { row: 5, col: 8 }, orientation: 'v' },
   { kind: 'destroyer', bow: { row: 3, col: 2 }, orientation: 'v' },
-];
-
-export const SHIP_KINDS: readonly ShipKind[] = [
-  'carrier',
-  'battleship',
-  'cruiser',
-  'submarine',
-  'destroyer',
 ];
 
 /** Uniformly random legal fleet (touching allowed). Pure given the RNG. */
