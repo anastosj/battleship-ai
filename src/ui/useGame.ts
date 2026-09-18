@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useRef } from 'react';
-import { chooseShot } from '../ai/random';
+import { chooseShot } from '../ai/huntTarget';
 import { fire, newGame, toAIView } from '../engine/game';
 import { makeRng } from '../engine/rng';
 import {

@@ -20,6 +20,7 @@ npm run lint         # eslint + prettier --check
 npm run typecheck    # tsc -b
 npm test             # vitest
 npm run build        # dist/
+npm run selfplay -- 1000   # AI vs AI fuzz: invariants + shot-count stats
 ```
 
 ## Layout
