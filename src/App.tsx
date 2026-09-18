@@ -13,10 +13,10 @@ import { useMatchHistory } from './ui/useMatchHistory';
 /** `seed` pins the AI fleet, randomize draws, and the coin flip (tests only). */
 export const App = ({ seed }: { seed?: number } = {}) => {
   const g = useGame(seed);
-  const { game, flipping } = g;
+  const { game, flipping, coinBusy } = g;
   const history = useMatchHistory(game);
   const leaderboard = useLeaderboard(game);
-  const humanTurn = game.phase === 'playing' && !flipping && game.turn === 'human';
+  const humanTurn = game.phase === 'playing' && !coinBusy && game.turn === 'human';
 
   return (
     <main>
@@ -55,11 +55,11 @@ export const App = ({ seed }: { seed?: number } = {}) => {
         </>
       )}
 
-      {(game.phase === 'coinflip' || flipping) && (
+      {(game.phase === 'coinflip' || coinBusy) && (
         <CoinFlip coin={game.coin} flipping={flipping} flip={g.flip} />
       )}
 
-      {(game.phase === 'playing' || game.phase === 'gameover') && !flipping && (
+      {(game.phase === 'playing' || game.phase === 'gameover') && !coinBusy && (
         <>
           <p className="status" role="status" aria-live="polite">
             {`${g.lastHuman} ${g.lastAi}`.trim()}

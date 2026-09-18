@@ -32,7 +32,10 @@ export const CoinFlip = ({ coin, flipping, flip }: Props) => {
   return (
     <section className="coinflip" aria-labelledby="coin-title">
       <h2 id="coin-title">Who fires first?</h2>
-      <div className={`coin ${face}${flipping ? ' spinning' : ''}`} aria-hidden="true">
+      <div
+        className={`coin ${face}${flipping ? ' spinning' : flipped ? ' landed' : ''}`}
+        aria-hidden="true"
+      >
         {face === 'heads' ? <Anchor /> : <Crosshair />}
       </div>
       <button type="button" className="primary big" disabled={flipped} onClick={flip}>

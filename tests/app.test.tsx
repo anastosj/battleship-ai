@@ -6,7 +6,7 @@ import { confirmFleet, flipCoin, setHumanFleet, startGame } from '../src/engine/
 import { makeRng } from '../src/engine/rng';
 import { shipCells as engineShipCells } from '../src/engine/board';
 import { cellLabel } from '../src/ui/cellLabel';
-import { AI_DELAY_MS, COIN_FLIP_MS, uiRng } from '../src/ui/useGame';
+import { AI_DELAY_MS, COIN_FLIP_MS, COIN_REVEAL_MS, uiRng } from '../src/ui/useGame';
 import { ErrorBoundary } from '../src/ui/ErrorBoundary';
 
 const grid = (name: string) => screen.getByRole('grid', { name });
@@ -29,15 +29,23 @@ const seedFor = (coin: 'heads' | 'tails'): number => {
   throw new Error('unreachable');
 };
 
+/** Advance through the spin, then (after React commits the landed face) through the reveal hold. */
+const settleCoin = () => {
+  act(() => {
+    vi.advanceTimersByTime(COIN_FLIP_MS + 10);
+  });
+  act(() => {
+    vi.advanceTimersByTime(COIN_REVEAL_MS + 10);
+  });
+};
+
 /** Randomize → Continue → Flip, then advance past the reveal so play has begun. */
 const startWith = (coin: 'heads' | 'tails') => {
   render(<App seed={seedFor(coin)} />);
   fireEvent.click(screen.getByRole('button', { name: 'Randomize fleet' }));
   fireEvent.click(screen.getByRole('button', { name: 'Continue to coin flip' }));
   fireEvent.click(screen.getByRole('button', { name: 'Flip coin' }));
-  act(() => {
-    vi.advanceTimersByTime(COIN_FLIP_MS + 10);
-  });
+  settleCoin();
   expect(screen.getByRole('status').textContent).toMatch(coin === 'heads' ? /^Heads/ : /^Tails/);
 };
 
@@ -191,9 +199,7 @@ describe('difficulty', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Randomize fleet' }));
     fireEvent.click(screen.getByRole('button', { name: 'Continue to coin flip' }));
     fireEvent.click(screen.getByRole('button', { name: 'Flip coin' }));
-    act(() => {
-      vi.advanceTimersByTime(COIN_FLIP_MS + 10);
-    });
+    settleCoin();
     // Alternate: AI fires, then we fire a cell we have not fired at yet.
     const parities = new Set<number>();
     for (let i = 0; i < 12; i++) {
@@ -233,9 +239,39 @@ describe('coin flip', () => {
     act(() => {
       vi.advanceTimersByTime(COIN_FLIP_MS + 10);
     });
+    // Landed: the face is held on screen with the result before play begins.
+    expect(screen.getByRole('button', { name: 'Flip coin' })).toBeDisabled();
+    expect(screen.getByRole('status').textContent).toMatch(/^(Heads|Tails)/);
+    expect(screen.queryByRole('grid', { name: 'Enemy waters' })).toBeNull();
+    act(() => {
+      vi.advanceTimersByTime(COIN_REVEAL_MS + 10);
+    });
     expect(screen.queryByRole('button', { name: 'Flip coin' })).toBeNull();
     expect(screen.getByRole('status').textContent).toMatch(/^(Heads|Tails)/);
     expect(screen.getByRole('grid', { name: 'Enemy waters' })).toBeInTheDocument();
+  });
+
+  it('the AI does not fire while the landed coin is still on screen', () => {
+    render(<App seed={seedFor('tails')} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Randomize fleet' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to coin flip' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Flip coin' }));
+    act(() => {
+      vi.advanceTimersByTime(COIN_FLIP_MS + 10);
+    });
+    act(() => {
+      vi.advanceTimersByTime(COIN_REVEAL_MS - 20);
+    });
+    expect(screen.queryByRole('grid', { name: 'Your fleet' })).toBeNull();
+    act(() => {
+      vi.advanceTimersByTime(20);
+    });
+    // Play begins only now; the AI's clock starts here, not during the hold.
+    expect(marks(grid('Your fleet'))).toBe(0);
+    act(() => {
+      vi.advanceTimersByTime(AI_DELAY_MS + 10);
+    });
+    expect(marks(grid('Your fleet'))).toBe(1);
   });
 
   it('the AI does not fire while the coin is still spinning', () => {
@@ -365,9 +401,7 @@ describe('match history', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Randomize fleet' }));
     fireEvent.click(screen.getByRole('button', { name: 'Continue to coin flip' }));
     fireEvent.click(screen.getByRole('button', { name: 'Flip coin' }));
-    act(() => {
-      vi.advanceTimersByTime(COIN_FLIP_MS + 10);
-    });
+    settleCoin();
     const dialog = finishGame();
     const won = /You win/.test(dialog.textContent ?? '');
 
@@ -415,9 +449,7 @@ describe('leaderboard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Randomize fleet' }));
     fireEvent.click(screen.getByRole('button', { name: 'Continue to coin flip' }));
     fireEvent.click(screen.getByRole('button', { name: 'Flip coin' }));
-    act(() => {
-      vi.advanceTimersByTime(COIN_FLIP_MS + 10);
-    });
+    settleCoin();
     const cells = randomFleet(makeRng(seed)).flatMap((s) => engineShipCells(s));
     for (const c of cells) {
       if (screen.queryByRole('dialog')) break;
