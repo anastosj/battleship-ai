@@ -330,6 +330,71 @@ describe('game over and play again', () => {
   });
 });
 
+describe('match history', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    localStorage.clear();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    localStorage.clear();
+  });
+
+  const finishGame = () => {
+    for (let i = 0; i < 100 && !screen.queryByRole('dialog'); i++) {
+      act(() => {
+        vi.advanceTimersByTime(AI_DELAY_MS + 10);
+      });
+      if (screen.queryByRole('dialog')) break;
+      const target = within(grid('Enemy waters'))
+        .getAllByRole('button')
+        .find((b) => !b.hasAttribute('disabled'));
+      if (target) fireEvent.click(target);
+    }
+    return screen.getByRole('dialog');
+  };
+  const rows = () => within(screen.getByRole('table')).getAllByRole('row').slice(1);
+
+  it('is hidden until a game finishes, then lists it once and persists across reloads', () => {
+    const view = render(<App seed={seedFor('tails')} />);
+    expect(screen.queryByText('Previous matches')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Randomize fleet' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to coin flip' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Flip coin' }));
+    act(() => {
+      vi.advanceTimersByTime(COIN_FLIP_MS + 10);
+    });
+    const dialog = finishGame();
+    const won = /You win/.test(dialog.textContent ?? '');
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Play again' }));
+    expect(screen.getByText('Previous matches')).toBeInTheDocument();
+    expect(rows()).toHaveLength(1);
+    const cells = within(rows()[0]!)
+      .getAllByRole('cell')
+      .map((c) => c.textContent);
+    expect(cells[1]).toBe('Hard');
+    expect(cells[2]).toBe(won ? 'Won' : 'Lost');
+    expect(cells[won ? 4 : 6]).toBe('17 / 17');
+    expect(screen.getByText(won ? '1–0 vs. the AI' : '0–1 vs. the AI')).toBeInTheDocument();
+
+    view.unmount();
+    render(<App seed={seedFor('heads')} />);
+    expect(rows()).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear history' }));
+    expect(screen.queryByText('Previous matches')).toBeNull();
+    expect(localStorage.length).toBe(0);
+  });
+
+  it('ignores corrupt storage and a New game mid-match records nothing', () => {
+    localStorage.setItem('battleship-ai.matches.v1', '{oops');
+    startWith('tails');
+    fireEvent.click(screen.getByRole('button', { name: 'New game' }));
+    expect(screen.queryByText('Previous matches')).toBeNull();
+  });
+});
+
 describe('error boundary', () => {
   it('renders a recovery message instead of a white screen when a child throws', () => {
     const Boom = () => {

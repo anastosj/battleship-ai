@@ -364,3 +364,39 @@ touching ships.") made it as wide as the sentence, and `.placement`'s `flex-wrap
 Fix: `.tray { flex: 0 1 20rem }` so the hints wrap inside a fixed column. Verified 1400 px
 (side-by-side) and 375 px (stacked). Lesson: RTL tests cannot see layout; every PR that adds text to
 a flex row needs the desktop screenshot, not only the phone one.
+
+### 25. History hook: two lint-rejected drafts before the right shape (2026-09-18, PR 6, layer: React state — caught by `eslint-plugin-react-hooks`)
+
+Miss, not a shipped bug. First draft of `useMatchHistory` kept `localStorage` in a ref written
+during render (`react-hooks/refs`), second draft called `setMatches` inside the game-over effect and
+mirrored to storage from a second effect (`react-hooks/set-state-in-effect`). Both "worked" in
+Vitest; both are the exact patterns that double-fire under StrictMode and would have recorded a
+match twice on a dev build.
+
+Fix: a tiny external store (`createMatchStore`: load once, `add`/`clear`, notify) read through
+`useSyncExternalStore`; the game-over effect only calls `store.add`, and dedupe by `seed` lives in
+pure `appendMatch`. While writing the "persists across reload" test I also caught that a
+module-level singleton store would have made that test vacuous (the list survives unmount without
+touching storage), so the store is created per mount. Lesson: the React lint rules were right both
+times; and when a persistence test can pass without the persistence layer, the test is the bug.
+
+### 26. History dedupe keyed on the game seed; two tabs could clobber each other (2026-09-18, PR 6, layer: persistence — caught by Devin Review)
+
+Two findings on the first push of PR 6, both valid.
+
+1. `appendMatch` treated `seed` as the match identity. `newSeed()` is 32 random bits, so two
+   different games can legitimately share one, and the second would silently never be saved.
+   Fix: every record gets an `id` (`crypto.randomUUID()`), dedupe is by `id`, and the
+   "record once" guard moved to the hook (it remembers the last `game` object it recorded).
+   `seed` stays as metadata. Test: same seed, different id → two rows.
+2. Each tab loaded the list once and rewrote the whole key on every save, so a match finished in
+   tab B could erase the one tab A had just written. Fix: `add` re-reads storage before appending,
+   and the store subscribes to the window `storage` event (attached on first subscriber, removed on
+   last) so the other tab's list updates live. Test: two stores on one in-memory storage.
+
+Lesson: "the seed identifies the game" was true inside one engine run and false the moment records
+outlive it; and any localStorage read-modify-write needs the multi-tab question asked out loud.
+
+Known limit, left open on purpose: two tabs finishing games in the same millisecond can still
+race the read-modify-write (Web Storage has no atomic update). Closing that needs IndexedDB or a
+Web Locks mutex; not worth it for a per-device match list. Worst case is one lost row.

@@ -322,3 +322,43 @@ button.big {
   text-align: left;
   font-weight: 500;
 }
+
+.history {
+  margin-top: 2rem;
+  border-top: 1px solid #ccc;
+  padding-top: 1rem;
+}
+.history-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.history-head h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+.history-summary {
+  color: #555;
+  margin-right: auto;
+}
+.history-scroll {
+  overflow-x: auto;
+}
+.history-table {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+.history-table td:first-child,
+.history-table td:nth-child(2),
+.history-table td:nth-child(3) {
+  text-align: left;
+}
+.history-table tr.won td:nth-child(3) {
+  color: #14532d;
+  font-weight: 600;
+}
+.history-table tr.lost td:nth-child(3) {
+  color: #8b1e1a;
+}
