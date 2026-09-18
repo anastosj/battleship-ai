@@ -1,0 +1,62 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #1a1a1a;
+  background: #f5f7fa;
+}
+body {
+  margin: 0;
+}
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.status {
+  min-height: 1.5em;
+  font-weight: 600;
+}
+.turn {
+  font-weight: 400;
+  color: #555;
+}
+.boards {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+.board h2 {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(10, 2.2rem);
+  grid-template-rows: repeat(10, 2.2rem);
+  gap: 2px;
+}
+.cell {
+  border: 1px solid #8fa3b8;
+  background: #cfe3f5;
+  font-size: 1rem;
+  padding: 0;
+  cursor: pointer;
+}
+.cell:disabled {
+  cursor: default;
+}
+.cell.ship {
+  background: #7f8c8d;
+}
+.cell.miss {
+  background: #eef3f8;
+  color: #6b7c8c;
+}
+.cell.hit {
+  background: #d9463e;
+  color: #fff;
+}
