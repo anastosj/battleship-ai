@@ -92,6 +92,8 @@ describe('densityMap', () => {
     };
     const map = densityMap(v);
     expect(at(map, 4, 9)).toBe(Math.max(...map));
+    // The sinking shot (3,8) is certain: nothing may lie across it, so (3,9) stays cold.
+    expect(at(map, 3, 9)).toBe(0);
     for (let seed = 1; seed <= 20; seed++) {
       expect(chooseShot(v, makeRng(seed))).toEqual({ row: 4, col: 9 });
     }
