@@ -65,14 +65,18 @@ const count = (k: Knowledge, targeting: boolean): number[] => {
  * legally occupy — not over a miss, not over a cell attributed to a sunk ship — and count how
  * many of those placements cover each untargeted cell. While unresolved hits exist only
  * placements that cover at least one of them count, weighted by how many they cover, so the
- * map collapses onto the cells that complete a wounded ship. If attribution has boxed a hit
- * in so that no placement can cover it, the map falls back to the plain hunt count.
+ * map collapses onto the cells that complete a wounded ship. Sunk attribution is a heuristic
+ * (touching ships can fool it), so if it has boxed a hit in so that no placement can cover it,
+ * the count is retried with attributed hits passable again — the mis-attributed cells of the
+ * still-live ship are among them. Only if that also finds nothing does the map fall back to
+ * the plain hunt count.
  */
 export const densityMap = (view: AIView): Density => {
   const mem = replay(view.shots);
-  const blocked = new Set<string>();
-  for (const s of view.shots) if (s.result === 'miss') blocked.add(coordKey(s.coord));
+  const misses = new Set<string>();
+  for (const s of view.shots) if (s.result === 'miss') misses.add(coordKey(s.coord));
   const unresolved = new Set(mem.unresolved.map((h) => coordKey(h.coord)));
+  const blocked = new Set(misses);
   for (const h of mem.hits) if (!unresolved.has(h)) blocked.add(h);
   const k: Knowledge = {
     size: view.boardSize,
@@ -84,6 +88,8 @@ export const densityMap = (view: AIView): Density => {
   if (unresolved.size > 0) {
     const targeted = count(k, true);
     if (targeted.some((v) => v > 0)) return targeted;
+    const recovered = count({ ...k, blocked: misses }, true);
+    if (recovered.some((v) => v > 0)) return recovered;
   }
   return count(k, false);
 };

@@ -21,6 +21,10 @@ export const App = ({ seed }: { seed?: number } = {}) => {
   const humanTurn = game.phase === 'playing' && !coinBusy && game.turn === 'human';
   const report = `${g.lastHuman} ${g.lastAi}`.trim();
   const [showThreat, setShowThreat] = useState(false);
+  const reset = () => {
+    setShowThreat(false);
+    g.reset();
+  };
   const threat =
     showThreat && (game.phase === 'playing' || game.phase === 'gameover')
       ? normalizedDensity(toAIView(game))
@@ -40,7 +44,7 @@ export const App = ({ seed }: { seed?: number } = {}) => {
             <span className="badge" aria-label={`Opponent: ${DIFFICULTY_NAMES[game.difficulty]}`}>
               {DIFFICULTY_NAMES[game.difficulty]}
             </span>
-            <button type="button" onClick={g.reset}>
+            <button type="button" onClick={reset}>
               New game
             </button>
           </div>
@@ -127,7 +131,7 @@ export const App = ({ seed }: { seed?: number } = {}) => {
       )}
 
       {game.phase === 'gameover' && (
-        <GameOverModal game={game} playAgain={g.reset} leaderboard={leaderboard} />
+        <GameOverModal game={game} playAgain={reset} leaderboard={leaderboard} />
       )}
     </main>
   );

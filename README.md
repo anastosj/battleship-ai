@@ -22,7 +22,7 @@ button.
 
 Spec: [`docs/SPEC.md`](./docs/SPEC.md) (v0.2, frozen before coding; deviations table at the top).
 Bugs: [`docs/BUGS.md`](./docs/BUGS.md) (short write-up) and [`docs/BUGLOG.md`](./docs/BUGLOG.md)
-(all 38 entries).
+(all 39 entries).
 
 ## How to play
 

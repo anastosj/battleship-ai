@@ -71,6 +71,32 @@ describe('densityMap', () => {
     expect(map.some((v) => v > 0)).toBe(true);
   });
 
+  it('recovers from a wrong sunk attribution (fuzz seed 874 from the Hunt/Target suite)', () => {
+    // Destroyer at (3,7)(3,8) touching a Battleship at (4,6)–(4,9). Attribution wrongly resolves
+    // (4,8) as the Destroyer's, boxing in the live hits. The map must still reach (4,9).
+    const v: AIView = {
+      boardSize: 10,
+      sunkShips: ['destroyer'],
+      shots: [
+        { coord: { row: 3, col: 7 }, result: 'hit' },
+        { coord: { row: 3, col: 6 }, result: 'miss' },
+        { coord: { row: 2, col: 7 }, result: 'miss' },
+        { coord: { row: 4, col: 7 }, result: 'hit' },
+        { coord: { row: 5, col: 7 }, result: 'miss' },
+        { coord: { row: 4, col: 8 }, result: 'hit' },
+        { coord: { row: 3, col: 8 }, result: 'sunk', sunkShip: 'destroyer' },
+        { coord: { row: 4, col: 6 }, result: 'hit' },
+        { coord: { row: 5, col: 6 }, result: 'miss' },
+        { coord: { row: 4, col: 5 }, result: 'miss' },
+      ],
+    };
+    const map = densityMap(v);
+    expect(at(map, 4, 9)).toBe(Math.max(...map));
+    for (let seed = 1; seed <= 20; seed++) {
+      expect(chooseShot(v, makeRng(seed))).toEqual({ row: 4, col: 9 });
+    }
+  });
+
   it('normalizedDensity peaks at exactly 1', () => {
     expect(Math.max(...normalizedDensity(view()))).toBe(1);
     expect(normalizedDensity(view()).every((v) => v >= 0 && v <= 1)).toBe(true);

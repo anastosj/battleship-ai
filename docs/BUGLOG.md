@@ -560,3 +560,15 @@ legitimately reaches four cells along its row and column, so the whole row and c
 the neighbours are merely hottest. The code was right; the tests were rewritten to assert the
 invariants (row/column only, neighbours = max, hit cell = 0). Lesson: a test that hard-codes a
 number should be derived on paper before it is typed, or it tests the author's intuition.
+
+### 39. Density AI trusted sunk attribution as fact (2026-09-21, PR 25, layer: AI — caught by Devin Review)
+
+`densityMap` blocked every hit attributed to a sunk ship, so a placement could never cross one.
+Attribution is a heuristic — when touching ships tie both axes it can hand a live ship's cell to
+the sunk one (the seed-874 case in `ai-touching.test.ts`). With that cell solid, no placement
+could cover the remaining unresolved hits, the targeted count came back all zero, and the AI
+quietly dropped back to hunting the whole board with a wounded Battleship one cell away.
+Hunt/Target already had `connectedFrontier` for exactly this; the density AI had no equivalent.
+Fix: when the targeted count is empty, recount with attributed hits passable (only misses
+solid) before falling back to hunt mode. Regression test added with the seed-874 shot log.
+Lesson: every place that consumes an inference needs a plan for the inference being wrong.
