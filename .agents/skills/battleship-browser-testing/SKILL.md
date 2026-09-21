@@ -70,7 +70,7 @@ description: Play Battleship AI locally or on its live deployment, including AI 
 
 ## Density heatmap checks
 
-- The threat checkbox appears during combat and gameover. Enable it before
+- The threat checkbox appears during combat and gameover. It is on by default; ensure it is enabled before
   observing density; unfired own cells include `, threat N%` in their labels.
   Fired cells must lose both that suffix and their amber background.
 - Compare the newly fired AI coordinate with its **previous** heat, not the

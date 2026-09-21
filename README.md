@@ -58,7 +58,7 @@ cells that finish a wounded ship. Sunk attribution is shared with Medium (`repla
 test is 38–48. Head-to-head over 1,000 self-play games the winner needed 39.7 shots on average
 versus Medium's 45.6 (`npm run selfplay -- 1000 1 expert`).
 
-**AI threat map.** During any game the "Show AI threat map" toggle under your own board shades
+**AI threat map.** During any game the "Show AI threat map" toggle (on by default) under your own board shades
 each unfired cell by that same density (brightest = the cell No Pacing the Frontier would fire
 at next) and appends `threat N%` to the cell's label, so the visual is never colour-only.
 

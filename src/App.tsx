@@ -20,9 +20,9 @@ export const App = ({ seed }: { seed?: number } = {}) => {
   const leaderboard = useLeaderboard(game);
   const humanTurn = game.phase === 'playing' && !coinBusy && game.turn === 'human';
   const report = `${g.lastHuman} ${g.lastAi}`.trim();
-  const [showThreat, setShowThreat] = useState(false);
+  const [showThreat, setShowThreat] = useState(true);
   const reset = () => {
-    setShowThreat(false);
+    setShowThreat(true);
     g.reset();
   };
   const threat =

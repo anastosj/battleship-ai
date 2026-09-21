@@ -213,7 +213,7 @@ describe('difficulty', () => {
     expect(screen.getByRole('radio', { name: /Easy/ })).toBeChecked();
   });
 
-  it('the threat map is off by default and, once on, labels every unfired cell with a threat %', () => {
+  it('the threat map is on by default, labels every unfired cell with a threat %, and can be hidden', () => {
     render(<App seed={seedFor('tails')} />);
     fireEvent.click(screen.getByRole('radio', { name: /Easy/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Randomize fleet' }));
@@ -221,9 +221,7 @@ describe('difficulty', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Flip coin' }));
     settleCoin();
     const own = () => within(grid('Your fleet')).getAllByRole('button');
-    expect(own().some((b) => /threat/.test(b.getAttribute('aria-label') ?? ''))).toBe(false);
-
-    fireEvent.click(screen.getByRole('checkbox', { name: /Show AI threat map/ }));
+    expect(screen.getByRole('checkbox', { name: /Show AI threat map/ })).toBeChecked();
     const labelled = own().filter((b) => /threat \d+%$/.test(b.getAttribute('aria-label') ?? ''));
     expect(labelled).toHaveLength(100);
     const pct = labelled.map((b) =>
@@ -237,6 +235,9 @@ describe('difficulty', () => {
     // The AI's shot is no longer part of the map.
     const fired = grid('Your fleet').querySelector('.cell.miss, .cell.hit, .cell.sunk');
     expect(fired?.getAttribute('aria-label')).not.toMatch(/threat/);
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /Show AI threat map/ }));
+    expect(own().some((b) => /threat/.test(b.getAttribute('aria-label') ?? ''))).toBe(false);
   });
 
   it('an Easy opponent does not hunt on a single parity', () => {
