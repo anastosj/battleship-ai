@@ -5,13 +5,13 @@
 > log's "the spec said X, reality was Y" entries stay readable. Where the shipped game deviates,
 > the deviation was an explicit owner decision recorded in the log:
 >
-> | Spec v0.2 said                    | Shipped                                                        | Decided in           |
-> | --------------------------------- | -------------------------------------------------------------- | -------------------- |
-> | §5.4 average shots-to-win ≈ 55–65 | band widened to 46–65 (measured ≈50)                           | BUGLOG #9            |
-> | §12 no difficulty selector        | Easy / Hard, locked once the fleet is confirmed                | PR 5 (owner request) |
-> | §F3 AI reply after 250 ms         | 500 ms                                                         | BUGLOG #29           |
-> | §3 nice-to-have: history / theme  | match history, top-10 leaderboard, Captain Devin console theme | PRs 6–8              |
-> | §11 three parallel child sessions | built as twelve sequential slices, one PR each                 | see README           |
+> | Spec v0.2 said                    | Shipped                                                                    | Decided in                  |
+> | --------------------------------- | -------------------------------------------------------------------------- | --------------------------- |
+> | §5.4 average shots-to-win ≈ 55–65 | band widened to 46–65 (measured ≈50)                                       | BUGLOG #9                   |
+> | §12 no difficulty selector        | Easy / Medium / No Pacing the Frontier, locked once the fleet is confirmed | PR 5, PR 25 (owner request) |
+> | §F3 AI reply after 250 ms         | 500 ms                                                                     | BUGLOG #29                  |
+> | §3 nice-to-have: history / theme  | match history, top-10 leaderboard, Captain Devin console theme             | PRs 6–8                     |
+> | §11 three parallel child sessions | built as twelve sequential slices, one PR each                             | see README                  |
 
 **Version:** 0.2 (revised per review)
 **Repo:** `anastosj/battleship-ai` (public from day one) **Hosting:** GitHub Pages

@@ -549,3 +549,14 @@ stored records; browser run planting 500 (reload and cross-tab both rendered exa
 stayed responsive). Standalone impact is low — localStorage is this app's only trust boundary —
 but the lesson is general: when a list has a size invariant, the read and write paths must both
 enforce it, or the one you forgot is the one that gets exploited.
+
+### 38. Two wrong expectations in the first density-map tests (2026-09-21, PR 25, layer: AI tests — caught by running them)
+
+Writing tests for the new probability-density AI I asserted (a) a corner cell's weight on an
+empty board is `2+3+3+4+5` and (b) after a lone hit only its four neighbours are hot. Both were
+the author's arithmetic, not the AI's: a corner is covered by exactly one horizontal and one
+vertical placement _per ship_ (weight 10, not 17), and a carrier lying through a lone hit
+legitimately reaches four cells along its row and column, so the whole row and column are hot —
+the neighbours are merely hottest. The code was right; the tests were rewritten to assert the
+invariants (row/column only, neighbours = max, hit cell = 0). Lesson: a test that hard-codes a
+number should be derived on paper before it is typed, or it tests the author's intuition.

@@ -8,7 +8,8 @@ no backend, deployed to GitHub Pages on every push to `main`.
 ## Status
 
 Complete and deployed. Manual placement (click, **R** to rotate, pick ships back up) or
-"Randomize fleet" (repeatable); **Easy / Hard** opponent, locked once you confirm your fleet;
+"Randomize fleet" (repeatable); **Easy / Medium / No Pacing the Frontier** opponent, locked once
+you confirm your fleet; an optional **AI threat map** over your own board;
 one-shot coin flip for first move (heads = you, tails = AI) with the landed face held for 1.5 s;
 Hunt/Target AI replying after 500 ms; fleet panels; game-over modal with shots / hits / accuracy
 for both sides and "Play again". Finished games are saved to a **match history** (last 100, on
@@ -21,7 +22,7 @@ button.
 
 Spec: [`docs/SPEC.md`](./docs/SPEC.md) (v0.2, frozen before coding; deviations table at the top).
 Bugs: [`docs/BUGS.md`](./docs/BUGS.md) (short write-up) and [`docs/BUGLOG.md`](./docs/BUGLOG.md)
-(all 37 entries).
+(all 38 entries).
 
 ## How to play
 
@@ -35,18 +36,31 @@ Bugs: [`docs/BUGS.md`](./docs/BUGS.md) (short write-up) and [`docs/BUGLOG.md`](.
 
 ## The AI
 
-Two opponents, chosen on the placement screen and locked once you continue to the coin flip.
-Both see only their own shots and their results (`AIView`) — never the board — and a test
+Three opponents, chosen on the placement screen and locked once you continue to the coin flip.
+All see only their own shots and their results (`AIView`) — never the board — and a test
 enforces that `src/ai/**` cannot import the board types.
 
 **Easy** (`src/ai/easy.ts`) hunts uniformly at random and, after a hit, fires at the open
 neighbours of its latest hit. When anything sinks it forgets every outstanding hit — the naive
 behaviour BUGLOG #1 warns about — so it averages ≈70 shots to clear a board.
 
-**Hard** (`src/ai/huntTarget.ts`, the default, ≈50 shots) is the full Hunt/Target AI. Hunt: checkerboard parity filtered by whether the smallest surviving ship still fits. Target:
+**Medium** (`src/ai/huntTarget.ts`, the default, ≈50 shots) is the full Hunt/Target AI. Hunt: checkerboard parity filtered by whether the smallest surviving ship still fits. Target:
 extend lines through unresolved hits; when a ship sinks, infer which hits belonged to it from the
 reported length so a touching ship is not abandoned (see `docs/BUGLOG.md` #1, #8). A self-play test
 checks the average shots-to-win over random fleets stays within 46–65.
+
+**No Pacing the Frontier** (`src/ai/density.ts`, ≈42 shots) is a probability-density AI. Each
+turn it enumerates every position each surviving ship could still legally occupy — not across
+a miss, not across a cell attributed to a sunk ship — and counts how many of those placements
+cover each unfired cell; it fires at the maximum. While it has unresolved hits only placements
+that cover one of them count (weighted by how many they cover), so the map collapses onto the
+cells that finish a wounded ship. Sunk attribution is shared with Medium (`replay`). Its band
+test is 38–48. Head-to-head over 1,000 self-play games the winner needed 39.7 shots on average
+versus Medium's 45.6 (`npm run selfplay -- 1000 1 expert`).
+
+**AI threat map.** During any game the "Show AI threat map" toggle under your own board shades
+each unfired cell by that same density (brightest = the cell No Pacing the Frontier would fire
+at next) and appends `threat N%` to the cell's label, so the visual is never colour-only.
 
 See `docs/BUGS.md` for the bug write-up and `docs/BUGLOG.md` for the running log of bugs and
 first-attempt misses.
@@ -100,7 +114,8 @@ npm run lint         # eslint + prettier --check
 npm run typecheck    # tsc -b
 npm test             # vitest
 npm run build        # dist/
-npm run selfplay -- 1000   # AI vs AI fuzz: invariants + shot-count stats
+npm run selfplay -- 1000          # AI vs AI fuzz: invariants + shot-count stats (Medium)
+npm run selfplay -- 1000 1 expert # same for No Pacing the Frontier (easy | hard | expert)
 ```
 
 ## Layout

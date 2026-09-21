@@ -1,4 +1,4 @@
-import type { MouseEvent, PointerEvent } from 'react';
+import type { CSSProperties, MouseEvent, PointerEvent } from 'react';
 import { isSunk, markAt, shipAt } from '../engine/board';
 import { cellLabel } from './cellLabel';
 import { BOARD_SIZE, coordKey, type Board as BoardState, type Coord } from '../engine/types';
@@ -18,6 +18,8 @@ type Props = {
   onCellClick?: (at: Coord) => void;
   onCellHover?: (at: Coord | undefined) => void;
   preview?: Preview;
+  /** Row-major 0–1 threat weights; shades untargeted cells and reports the % in the label. */
+  heat?: readonly number[];
 };
 
 export const Board = ({
@@ -29,6 +31,7 @@ export const Board = ({
   onCellClick,
   onCellHover,
   preview,
+  heat,
 }: Props) => {
   const rows = Array.from({ length: BOARD_SIZE }, (_, row) => row);
   const previewKeys = new Set(preview?.cells.map(coordKey));
@@ -46,7 +49,7 @@ export const Board = ({
     if (touch) onCellHover?.(undefined);
   };
   return (
-    <section className="board">
+    <section className={`board${heat ? ' heat' : ''}`}>
       <h2>{title}</h2>
       <div
         className="grid"
@@ -69,12 +72,16 @@ export const Board = ({
                 : ' preview-bad'
               : '';
             const disabled = !interactive || (mode === 'fire' && mark !== undefined);
+            const threat = heat && mark === undefined ? (heat[row * BOARD_SIZE + col] ?? 0) : 0;
+            const threatLabel =
+              heat && mark === undefined ? `, threat ${Math.round(threat * 100)}%` : '';
             return (
               <button
                 key={`${row}-${col}`}
                 type="button"
                 className={`cell ${state}${previewClass}`}
-                aria-label={`${cellLabel(c)}, ${state}`}
+                style={heat ? ({ '--heat': threat } as CSSProperties) : undefined}
+                aria-label={`${cellLabel(c)}, ${state}${threatLabel}`}
                 disabled={disabled}
                 onPointerDown={pointerDown}
                 onPointerCancel={pointerCancel}

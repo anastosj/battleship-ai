@@ -400,6 +400,28 @@ button.big {
   display: grid;
   gap: 1rem;
 }
+/* Threat map: amber glow scaled by --heat (0–1) on cells the enemy has not fired at. */
+.board.heat .cell.water,
+.board.heat .cell.ship {
+  background-image: linear-gradient(
+    rgba(255, 179, 71, calc(var(--heat, 0) * 0.85)),
+    rgba(255, 179, 71, calc(var(--heat, 0) * 0.85))
+  );
+}
+.threat-toggle {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  cursor: pointer;
+  max-width: calc(var(--cell) * 10 + 22px);
+}
+.threat-toggle input {
+  accent-color: var(--amber);
+}
+.threat-toggle .hint {
+  display: block;
+  font-size: 0.85rem;
+}
 .fleet h3 {
   font-size: 1rem;
   margin: 0 0 0.25rem;
