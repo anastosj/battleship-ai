@@ -176,11 +176,12 @@ describe('difficulty', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it('defaults to Hard, can be switched during placement, and disappears once the fleet is confirmed', () => {
+  it('defaults to Medium, can be switched during placement, and disappears once the fleet is confirmed', () => {
     render(<App seed={seedFor('tails')} />);
     const easy = screen.getByRole('radio', { name: /Easy/ });
-    const hard = screen.getByRole('radio', { name: /Hard/ });
-    expect(hard).toBeChecked();
+    const medium = screen.getByRole('radio', { name: /Medium/ });
+    expect(medium).toBeChecked();
+    expect(screen.getByRole('radio', { name: /No Pacing the Frontier/ })).not.toBeChecked();
     fireEvent.click(easy);
     expect(easy).toBeChecked();
     expect(screen.queryByText('Easy', { selector: '.badge' })).toBeNull();
@@ -210,6 +211,33 @@ describe('difficulty', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Continue to coin flip' }));
     fireEvent.click(screen.getByRole('button', { name: 'New game' }));
     expect(screen.getByRole('radio', { name: /Easy/ })).toBeChecked();
+  });
+
+  it('the threat map is on by default, labels every unfired cell with a threat %, and can be hidden', () => {
+    render(<App seed={seedFor('tails')} />);
+    fireEvent.click(screen.getByRole('radio', { name: /Easy/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Randomize fleet' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to coin flip' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Flip coin' }));
+    settleCoin();
+    const own = () => within(grid('Your fleet')).getAllByRole('button');
+    expect(screen.getByRole('checkbox', { name: /Show AI threat map/ })).toBeChecked();
+    const labelled = own().filter((b) => /threat \d+%$/.test(b.getAttribute('aria-label') ?? ''));
+    expect(labelled).toHaveLength(100);
+    const pct = labelled.map((b) =>
+      Number(/threat (\d+)%$/.exec(b.getAttribute('aria-label')!)![1]),
+    );
+    expect(Math.max(...pct)).toBe(100);
+
+    act(() => {
+      vi.advanceTimersByTime(AI_DELAY_MS + 10);
+    });
+    // The AI's shot is no longer part of the map.
+    const fired = grid('Your fleet').querySelector('.cell.miss, .cell.hit, .cell.sunk');
+    expect(fired?.getAttribute('aria-label')).not.toMatch(/threat/);
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /Show AI threat map/ }));
+    expect(own().some((b) => /threat/.test(b.getAttribute('aria-label') ?? ''))).toBe(false);
   });
 
   it('an Easy opponent does not hunt on a single parity', () => {
@@ -430,7 +458,7 @@ describe('match history', () => {
     const cells = within(rows()[0]!)
       .getAllByRole('cell')
       .map((c) => c.textContent);
-    expect(cells[1]).toBe('Hard');
+    expect(cells[1]).toBe('Medium');
     expect(cells[2]).toBe(won ? 'Won' : 'Lost');
     expect(cells[won ? 4 : 6]).toBe('17 / 17');
     expect(screen.getByText(won ? '1–0 vs. the enemy' : '0–1 vs. the enemy')).toBeInTheDocument();
@@ -504,7 +532,7 @@ describe('leaderboard', () => {
     const cells = within(boardRows()[0]!)
       .getAllByRole('cell')
       .map((c) => c.textContent);
-    expect(cells.slice(0, 4)).toEqual(['1', 'Grace Hopper', '17', 'Hard']);
+    expect(cells.slice(0, 4)).toEqual(['1', 'Grace Hopper', '17', 'Medium']);
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear history' }));
     expect(screen.queryByText("Ship's log")).toBeNull();

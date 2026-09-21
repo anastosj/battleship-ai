@@ -31,12 +31,14 @@ type Props = {
 
 const DIFFICULTY_CALLSIGNS: Record<Difficulty, string> = {
   easy: 'Cadet',
-  hard: 'No Slowing the Frontier',
+  hard: 'Commander',
+  expert: 'Bayes at the Helm',
 };
 
 const DIFFICULTY_HINTS: Record<Difficulty, string> = {
   easy: 'Fires at random, then pokes around a hit.',
   hard: 'Parity hunt, line targeting, never forgets a hit.',
+  expert: 'Counts every fleet that fits the evidence; fires where the most overlap.',
 };
 
 export const PlacementScreen = ({

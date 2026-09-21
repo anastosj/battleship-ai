@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
-import { DIFFICULTY_NAMES } from './ai';
+import { useEffect, useRef, useState } from 'react';
+import { DIFFICULTY_NAMES, normalizedDensity } from './ai';
+import { toAIView } from './engine/game';
 import { Board } from './ui/Board';
 import { CoinFlip } from './ui/CoinFlip';
 import { FleetPanel } from './ui/FleetPanel';
@@ -19,6 +20,15 @@ export const App = ({ seed }: { seed?: number } = {}) => {
   const leaderboard = useLeaderboard(game);
   const humanTurn = game.phase === 'playing' && !coinBusy && game.turn === 'human';
   const report = `${g.lastHuman} ${g.lastAi}`.trim();
+  const [showThreat, setShowThreat] = useState(true);
+  const reset = () => {
+    setShowThreat(true);
+    g.reset();
+  };
+  const threat =
+    showThreat && (game.phase === 'playing' || game.phase === 'gameover')
+      ? normalizedDensity(toAIView(game))
+      : undefined;
   /** The phone status box scrolls; a new report must start at its top. */
   const status = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
@@ -34,7 +44,7 @@ export const App = ({ seed }: { seed?: number } = {}) => {
             <span className="badge" aria-label={`Opponent: ${DIFFICULTY_NAMES[game.difficulty]}`}>
               {DIFFICULTY_NAMES[game.difficulty]}
             </span>
-            <button type="button" onClick={g.reset}>
+            <button type="button" onClick={reset}>
               New game
             </button>
           </div>
@@ -86,7 +96,23 @@ export const App = ({ seed }: { seed?: number } = {}) => {
                 showShips
                 mode="fire"
                 interactive={false}
+                heat={threat}
               />
+              <label className="threat-toggle">
+                <input
+                  type="checkbox"
+                  checked={showThreat}
+                  onChange={(e) => setShowThreat(e.target.checked)}
+                />
+                <span>
+                  Show AI threat map
+                  <span className="hint">
+                    Brighter = more ways a surviving ship could still lie there, given the
+                    enemy&rsquo;s shots so far. &ldquo;No Pacing the Frontier&rdquo; fires at the
+                    brightest cell.
+                  </span>
+                </span>
+              </label>
               <FleetPanel title="Your ships" board={game.human} />
             </div>
             <div className="side enemy">
@@ -105,7 +131,7 @@ export const App = ({ seed }: { seed?: number } = {}) => {
       )}
 
       {game.phase === 'gameover' && (
-        <GameOverModal game={game} playAgain={g.reset} leaderboard={leaderboard} />
+        <GameOverModal game={game} playAgain={reset} leaderboard={leaderboard} />
       )}
     </main>
   );

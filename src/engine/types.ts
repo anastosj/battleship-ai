@@ -49,8 +49,8 @@ export type Phase = 'placement' | 'coinflip' | 'playing' | 'gameover';
 
 export type Coin = 'heads' | 'tails';
 
-export type Difficulty = 'easy' | 'hard';
-export const DIFFICULTIES: readonly Difficulty[] = ['easy', 'hard'];
+export type Difficulty = 'easy' | 'hard' | 'expert';
+export const DIFFICULTIES: readonly Difficulty[] = ['easy', 'hard', 'expert'];
 
 export type GameState = {
   phase: Phase;

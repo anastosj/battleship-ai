@@ -1,17 +1,19 @@
 /**
- * AI-vs-AI fuzz harness (spec §8.3). Usage: `npm run selfplay -- [games] [startSeed]`.
- * Both sides use the Hunt/Target AI on random fleets. Any thrown error or invariant violation
+ * AI-vs-AI fuzz harness (spec §8.3). Usage: `npm run selfplay -- [games] [startSeed] [difficulty]`.
+ * Both sides use the same AI (default Hard) on random fleets. Any thrown error or invariant violation
  * prints the offending seed and exits non-zero.
  */
-import { chooseShot } from '../src/ai/huntTarget';
+import { chooseShotFor } from '../src/ai';
 import { randomFleet } from '../src/engine/fleet';
 import { fire, newGame, toAIView } from '../src/engine/game';
 import { makeRng } from '../src/engine/rng';
 import {
   BOARD_SIZE,
+  DIFFICULTIES,
   coordKey,
   type AIShot,
   type AIView,
+  type Difficulty,
   type GameState,
   type Player,
   type ShotResult,
@@ -19,6 +21,13 @@ import {
 
 const games = Number(process.argv[2] ?? 1000);
 const startSeed = Number(process.argv[3] ?? 1);
+const difficultyArg = process.argv[4] ?? 'hard';
+if (!(DIFFICULTIES as readonly string[]).includes(difficultyArg)) {
+  console.error(`unknown difficulty ${difficultyArg}; expected one of ${DIFFICULTIES.join(', ')}`);
+  process.exit(2);
+}
+const difficulty = difficultyArg as Difficulty;
+const chooseShot = (view: AIView, rng: () => number) => chooseShotFor(difficulty, view, rng);
 
 const toShot = (coord: AIShot['coord'], r: ShotResult): AIShot => {
   if (r.kind === 'invalid') throw new Error('invalid shot recorded');
@@ -101,7 +110,7 @@ for (let seed = startSeed; seed < startSeed + games; seed++) {
 counts.sort((a, b) => a - b);
 const avg = counts.reduce((a, b) => a + b, 0) / Math.max(1, counts.length);
 console.log(
-  `${games} games in ${Math.round(performance.now() - t0)} ms — winner shots: avg ${avg.toFixed(1)}, ` +
+  `${difficulty}: ${games} games in ${Math.round(performance.now() - t0)} ms — winner shots: avg ${avg.toFixed(1)}, ` +
     `min ${counts[0]}, p50 ${counts[Math.floor(counts.length / 2)]}, max ${counts[counts.length - 1]}; ` +
     `first mover won ${wins.human}/${games}; failures ${failures}`,
 );

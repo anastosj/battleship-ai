@@ -41,6 +41,9 @@ description: Play Battleship AI locally or on its live deployment, including AI 
   `npm run preview -- --port 4173` (reuse an existing preview if appropriate).
 - Navigate to `http://localhost:4173/battleship-ai/`; the Vite base path matters.
 - This version is client-side and requires no login or backend.
+- For working-tree testing with HMR, use `npm run dev -- --host 0.0.0.0`
+  and `http://localhost:5173/battleship-ai/`. Hard-reload after a handoff
+  that changed code; do not mix pre-change and post-change evidence.
 
 ## Gameplay observation
 
@@ -64,6 +67,25 @@ description: Play Battleship AI locally or on its live deployment, including AI 
   One game does not establish average AI performance.
 - Check whether the currently placed ships touch before claiming adjacent-ship
   attribution coverage; separated fleets cannot exercise that case.
+
+## Density heatmap checks
+
+- The threat checkbox appears during combat and gameover. It is on by default; ensure it is enabled before
+  observing density; unfired own cells include `, threat N%` in their labels.
+  Fired cells must lose both that suffix and their amber background.
+- Compare the newly fired AI coordinate with its **previous** heat, not the
+  recomputed heat after the shot. A maximum-density chooser should select a
+  prior maximum; ties are legitimate.
+- Observe both boards when measuring turn lock: the enemy board disables
+  before the delayed mutation on Your fleet. An observer attached only to
+  Your fleet may miss the lock transition.
+- After aligned hits, expect legal line extensions rather than requiring all
+  four orthogonal neighbours to remain maximal regardless of prior misses.
+- Test gameover controls using normal pointer input. A rendered checkbox
+  behind a modal is not evidence that the control is usable.
+- Leave heat enabled before New game and Play again, then start combat again
+  to verify reset. Absence of the checkbox during placement alone does not
+  establish that its state was reset.
 
 ## Timing-sensitive UI tests
 
